@@ -1,0 +1,2350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TRUTH ROYALE BATTLE</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&family=Cinzel:wght@600;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-user-select:none;touch-action:none}
+body{background:#0a0a0f;font-family:'Rajdhani',sans-serif;overflow:hidden;display:flex;justify-content:center;align-items:center;height:100vh;color:#fff}
+#game-container{position:relative;width:100vw;max-width:500px;height:100vh;max-height:900px;background:#0d0d1a;overflow:hidden;border:2px solid #1a1a3e;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,0.7),inset 0 0 80px rgba(0,0,0,0.4)}
+canvas{display:block;width:100%;height:100%}
+.ui-overlay{position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;display:flex;flex-direction:column}
+.ui-top{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px)}
+.ui-bottom{margin-top:auto;padding:8px;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px)}
+.elixir-bar-container{position:absolute;bottom:110px;left:50%;transform:translateX(-50%);width:80%;max-width:300px;height:24px;background:rgba(0,0,0,0.5);border-radius:12px;border:2px solid #4a0e4e;overflow:hidden;box-shadow:0 4px 10px rgba(0,0,0,0.5),inset 0 2px 4px rgba(0,0,0,0.6)}
+.elixir-fill{height:100%;background:linear-gradient(90deg,#6b1a7a,#c026d3,#f0abfc);border-radius:10px;transition:width 0.2s ease;position:relative}
+.elixir-fill::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(180deg,rgba(255,255,255,0.3) 0%,transparent 50%);border-radius:10px}
+.elixir-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',sans-serif;font-weight:700;font-size:14px;color:#fff;text-shadow:0 0 10px rgba(192,38,211,0.8);z-index:10}
+.card-deck{display:flex;justify-content:center;gap:6px;padding:4px}
+.card-slot{width:62px;height:84px;border-radius:9px;border:2px solid #333;background:linear-gradient(160deg,rgba(40,40,65,0.95),rgba(15,15,30,0.95));cursor:pointer;pointer-events:auto;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;position:relative;transition:transform 0.15s,border-color 0.15s,box-shadow 0.15s;font-size:10px;text-align:center;overflow:hidden;box-shadow:0 4px 8px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.08)}
+.card-slot:hover{transform:translateY(-4px) scale(1.03);box-shadow:0 8px 16px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.12)}
+.card-slot:active{transform:scale(0.95)}
+.card-slot.selected{border-color:#c026d3;box-shadow:0 0 15px rgba(192,38,211,0.5),inset 0 1px 0 rgba(255,255,255,0.15)}
+.card-slot.disabled{opacity:0.4;cursor:not-allowed}
+.card-portrait{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.card-slot .card-cost{position:absolute;top:2px;right:4px;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;color:#fff;background:rgba(192,38,211,0.85);width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:2;box-shadow:0 0 6px rgba(192,38,211,0.8)}
+.card-slot .card-name{font-size:8px;line-height:1.1;padding:2px 2px 3px;color:#fff;background:linear-gradient(0deg,rgba(0,0,0,0.85),rgba(0,0,0,0));width:100%;z-index:1;position:relative}
+.tower-hp{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;text-shadow:0 0 8px currentColor}
+.tower-hp.player{color:#3b82f6}
+.tower-hp.enemy{color:#ef4444}
+.timer-display{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;color:#fbbf24;text-shadow:0 0 12px rgba(251,191,36,0.6)}
+.screen-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:100;pointer-events:auto}
+.screen-overlay.hidden{display:none}
+/* ===================== TRUTH ROYALE BATTLE — PREMIUM LOGO ===================== */
+.trb-logo-wrap{position:relative;width:min(86vw,420px);aspect-ratio:1/0.94;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;filter:drop-shadow(0 10px 36px rgba(0,0,0,0.65))}
+.trb-aura{position:absolute;inset:-12%;border-radius:50%;background:radial-gradient(circle at 50% 45%,rgba(139,92,246,0.35) 0%,rgba(59,130,246,0.22) 35%,rgba(10,10,20,0) 70%);filter:blur(16px);animation:trbAuraPulse 4.5s ease-in-out infinite;pointer-events:none}
+@keyframes trbAuraPulse{0%,100%{opacity:0.55;transform:scale(0.96)}50%{opacity:1;transform:scale(1.06)}}
+.trb-rune-circle{position:absolute;width:88%;height:88%;top:6%;left:6%;animation:trbRotate 40s linear infinite;opacity:0.55;pointer-events:none}
+.trb-rune-circle.reverse{animation:trbRotateRev 60s linear infinite;width:98%;height:98%;top:1%;left:1%;opacity:0.3}
+@keyframes trbRotate{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes trbRotateRev{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
+.trb-svg{position:relative;width:100%;height:100%;z-index:3;overflow:visible}
+.trb-bolt{opacity:0;animation:trbBoltFlicker 6s ease-in-out infinite}
+.trb-bolt.b2{animation-delay:2.1s}
+.trb-bolt.b3{animation-delay:4.3s}
+@keyframes trbBoltFlicker{0%,92%,100%{opacity:0}93%{opacity:0.9}94%{opacity:0.1}95%{opacity:0.8}97%{opacity:0}}
+.trb-shard{animation:trbFloat 5s ease-in-out infinite;transform-origin:center}
+.trb-shard.s1{animation-duration:4.2s;animation-delay:0s}
+.trb-shard.s2{animation-duration:5.1s;animation-delay:.4s}
+.trb-shard.s3{animation-duration:4.6s;animation-delay:.9s}
+.trb-shard.s4{animation-duration:5.6s;animation-delay:1.3s}
+.trb-shard.s5{animation-duration:4.9s;animation-delay:.2s}
+.trb-shard.s6{animation-duration:5.3s;animation-delay:1.6s}
+@keyframes trbFloat{0%,100%{transform:translateY(0) rotate(0deg);opacity:0.55}50%{transform:translateY(-14px) rotate(180deg);opacity:1}}
+.trb-particle{animation:trbDrift linear infinite;opacity:0}
+@keyframes trbDrift{0%{opacity:0;transform:translateY(0) scale(0.3)}10%{opacity:1}85%{opacity:0.8}100%{opacity:0;transform:translateY(-120px) scale(1)}}
+.trb-crown-glow{animation:trbCrownPulse 3.2s ease-in-out infinite}
+@keyframes trbCrownPulse{0%,100%{opacity:0.7;filter:drop-shadow(0 0 6px rgba(251,191,36,0.7))}50%{opacity:1;filter:drop-shadow(0 0 18px rgba(251,191,36,1))}}
+.trb-wing{animation:trbWingShimmer 4s ease-in-out infinite}
+.trb-wing.right{animation-delay:0.4s}
+@keyframes trbWingShimmer{0%,100%{opacity:0.65}50%{opacity:0.95}}
+.trb-shine{animation:trbShineSweep 5s ease-in-out infinite}
+@keyframes trbShineSweep{0%{transform:translateX(-160%) skewX(-18deg)}18%{transform:translateX(220%) skewX(-18deg)}100%{transform:translateX(220%) skewX(-18deg)}}
+@media (prefers-reduced-motion: reduce){.trb-aura,.trb-rune-circle,.trb-bolt,.trb-shard,.trb-particle,.trb-crown-glow,.trb-wing,.trb-shine{animation:none !important}}
+@media (max-width:380px){.trb-logo-wrap{width:90vw}}
+.subtitle-text{font-family:'Rajdhani',sans-serif;font-size:14px;color:#888;margin-bottom:24px;text-align:center}
+.btn{padding:12px 32px;border:2px solid #c026d3;background:rgba(192,38,211,0.15);color:#fff;font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;border-radius:8px;cursor:pointer;transition:all 0.2s;margin:6px;pointer-events:auto}
+.btn:hover{background:rgba(192,38,211,0.35);box-shadow:0 0 20px rgba(192,38,211,0.4);transform:translateY(-2px)}
+.btn:active{transform:scale(0.95)}
+.btn-secondary{border-color:#3b82f6;background:rgba(59,130,246,0.15)}
+.btn-secondary:hover{background:rgba(59,130,246,0.35);box-shadow:0 0 20px rgba(59,130,246,0.4)}
+.result-title{font-family:'Orbitron',sans-serif;font-size:36px;font-weight:900;margin-bottom:12px}
+.result-win{color:#22c55e;text-shadow:0 0 20px rgba(34,197,94,0.6)}
+.result-lose{color:#ef4444;text-shadow:0 0 20px rgba(239,68,68,0.6)}
+.result-draw{color:#f59e0b;text-shadow:0 0 20px rgba(245,158,11,0.6)}
+.crown-count{font-size:48px;margin:8px 0}
+.deck-builder{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:400px;margin:12px auto;max-height:300px;overflow-y:auto}
+.deck-card-option{width:70px;height:96px;border:2px solid #444;border-radius:9px;background:linear-gradient(160deg,rgba(40,40,65,0.95),rgba(15,15,30,0.95));cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;font-size:10px;text-align:center;transition:all 0.15s;position:relative;overflow:hidden;box-shadow:0 4px 8px rgba(0,0,0,0.5),inset 0 1px 0 rgba(255,255,255,0.08)}
+.deck-card-option:hover{border-color:#666;transform:translateY(-2px) scale(1.03);box-shadow:0 8px 14px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.12)}
+.deck-card-option.selected{border-color:#22c55e;box-shadow:0 0 10px rgba(34,197,94,0.4)}
+.opt-portrait{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.opt-portrait-static{width:62px;height:62px;object-fit:cover;border-radius:6px;border:1px solid rgba(255,255,255,0.15);box-shadow:0 3px 6px rgba(0,0,0,0.5);margin-bottom:2px}
+.deck-card-option .opt-cost{position:absolute;top:2px;right:4px;color:#fff;background:rgba(192,38,211,0.85);font-weight:700;font-size:10px;font-family:'Orbitron';width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:2;box-shadow:0 0 6px rgba(192,38,211,0.8)}
+.deck-card-option .opt-name{font-size:8px;color:#fff;padding:2px 2px 3px;background:linear-gradient(0deg,rgba(0,0,0,0.85),rgba(0,0,0,0));width:100%;z-index:1;position:relative}
+.selected-count{font-family:'Orbitron',sans-serif;font-size:14px;color:#22c55e;margin:8px 0}
+.damage-popup{position:absolute;font-family:'Orbitron',sans-serif;font-weight:700;font-size:14px;pointer-events:none;animation:floatUp 1s ease-out forwards;z-index:50;text-shadow:0 0 6px currentColor}
+@keyframes floatUp{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-40px) scale(1.3)}}
+.deploy-hint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Orbitron',sans-serif;font-size:16px;color:rgba(255,255,255,0.6);pointer-events:none;animation:pulse 2s ease-in-out infinite;text-align:center;z-index:40}
+@keyframes pulse{0%,100%{opacity:0.4}50%{opacity:0.8}}
+.card-info-panel{position:absolute;bottom:200px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);border:1px solid #c026d3;border-radius:8px;padding:8px 12px;font-size:11px;color:#ccc;pointer-events:none;z-index:45;max-width:260px;text-align:center;display:none}
+.card-info-panel.show{display:block}
+.crowns-display{display:flex;gap:4px;align-items:center}
+.crown{font-size:16px;opacity:0.3;transition:opacity 0.3s}
+.crown.active{opacity:1;filter:drop-shadow(0 0 4px #fbbf24)}
+.overtime-badge{font-family:'Orbitron',sans-serif;font-size:10px;color:#ef4444;background:rgba(239,68,68,0.2);padding:2px 8px;border-radius:4px;border:1px solid #ef4444;animation:blink 0.5s ease-in-out infinite alternate}
+@keyframes blink{from{opacity:0.6}to{opacity:1}}
+.tutorial-text{font-size:12px;color:#888;max-width:300px;text-align:center;line-height:1.5;margin:8px 0}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#444;border-radius:2px}
+</style>
+</head>
+<body>
+<div id="game-container">
+<canvas id="gameCanvas"></canvas>
+<div class="ui-overlay" id="ui-overlay" style="display:none;">
+<div class="ui-top">
+<div class="tower-hp enemy" id="enemy-hp">HP: 4000</div>
+<div class="crowns-display" id="enemy-crowns"><span class="crown" id="ec1">👑</span><span class="crown" id="ec2">👑</span><span class="crown" id="ec3">👑</span></div>
+<div class="timer-display" id="timer">3:00</div>
+<div class="crowns-display" id="player-crowns"><span class="crown" id="pc1">👑</span><span class="crown" id="pc2">👑</span><span class="crown" id="pc3">👑</span></div>
+<div class="tower-hp player" id="player-hp">HP: 4000</div>
+</div>
+<div class="deploy-hint" id="deploy-hint" style="display:none;">Tap on your side to deploy!</div>
+<div class="card-info-panel" id="card-info"></div>
+<div class="elixir-bar-container"><div class="elixir-fill" id="elixir-fill" style="width:50%"></div><div class="elixir-text" id="elixir-text">5.0 / 10</div></div>
+<div class="ui-bottom"><div class="card-deck" id="card-deck"></div></div>
+</div>
+<div class="screen-overlay" id="start-screen">
+<div class="trb-logo-wrap" id="trbLogo">
+  <div class="trb-aura"></div>
+  <svg class="trb-rune-circle" viewBox="0 0 400 400">
+    <circle cx="200" cy="200" r="185" fill="none" stroke="#7c3aed" stroke-width="1" stroke-dasharray="2 8" opacity="0.6"/>
+    <circle cx="200" cy="200" r="170" fill="none" stroke="#3b82f6" stroke-width="0.75" stroke-dasharray="14 6" opacity="0.5"/>
+    <g fill="#a78bfa" opacity="0.8">
+      <text x="200" y="22" text-anchor="middle" font-size="14" font-family="serif">✦</text>
+      <text x="200" y="392" text-anchor="middle" font-size="14" font-family="serif">✦</text>
+      <text x="22" y="205" text-anchor="middle" font-size="14" font-family="serif">✦</text>
+      <text x="378" y="205" text-anchor="middle" font-size="14" font-family="serif">✦</text>
+    </g>
+  </svg>
+  <svg class="trb-rune-circle reverse" viewBox="0 0 400 400">
+    <circle cx="200" cy="200" r="195" fill="none" stroke="#60a5fa" stroke-width="0.5" stroke-dasharray="1 5" opacity="0.5"/>
+  </svg>
+  <svg class="trb-svg" viewBox="0 0 600 560" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="metalBlue" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#dbeafe"/><stop offset="22%" stop-color="#93c5fd"/><stop offset="45%" stop-color="#3b82f6"/><stop offset="70%" stop-color="#1d4ed8"/><stop offset="100%" stop-color="#0b1d4d"/>
+      </linearGradient>
+      <linearGradient id="metalGold" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#fffbe8"/><stop offset="25%" stop-color="#fde68a"/><stop offset="50%" stop-color="#f59e0b"/><stop offset="75%" stop-color="#b45309"/><stop offset="100%" stop-color="#3f1f02"/>
+      </linearGradient>
+      <linearGradient id="metalPurple" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#f3e8ff"/><stop offset="22%" stop-color="#d8b4fe"/><stop offset="45%" stop-color="#a855f7"/><stop offset="70%" stop-color="#7e22ce"/><stop offset="100%" stop-color="#2e0b4d"/>
+      </linearGradient>
+      <filter id="glowBlue" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <filter id="glowPurple" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <filter id="glowGold" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <filter id="softBlur8"><feGaussianBlur stdDeviation="8"/></filter>
+      <clipPath id="textClipTruth"><text x="300" y="148" text-anchor="middle" font-family="Orbitron, sans-serif" font-weight="900" font-size="86" letter-spacing="4">TRUTH</text></clipPath>
+      <clipPath id="textClipRoyale"><text x="300" y="268" text-anchor="middle" font-family="Cinzel, serif" font-weight="900" font-size="78" letter-spacing="8">ROYALE</text></clipPath>
+      <clipPath id="textClipBattle"><text x="300" y="392" text-anchor="middle" font-family="Orbitron, sans-serif" font-weight="900" font-size="86" letter-spacing="4">BATTLE</text></clipPath>
+      <radialGradient id="wingGradLeft" cx="100%" cy="50%" r="80%"><stop offset="0%" stop-color="#60a5fa" stop-opacity="0.55"/><stop offset="60%" stop-color="#7c3aed" stop-opacity="0.25"/><stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/></radialGradient>
+      <radialGradient id="wingGradRight" cx="0%" cy="50%" r="80%"><stop offset="0%" stop-color="#c084fc" stop-opacity="0.55"/><stop offset="60%" stop-color="#3b82f6" stop-opacity="0.25"/><stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/></radialGradient>
+      <radialGradient id="plateGrad" cx="50%" cy="35%" r="75%"><stop offset="0%" stop-color="#1e1b3a" stop-opacity="0.5"/><stop offset="70%" stop-color="#0a0816" stop-opacity="0.4"/><stop offset="100%" stop-color="#0a0816" stop-opacity="0"/></radialGradient>
+    </defs>
+
+    <g class="trb-wing left">
+      <path d="M295,185 C220,165 150,175 30,90 C45,140 70,160 55,175 C95,175 120,165 145,185
+               C110,195 95,215 60,225 C105,230 130,220 160,235
+               C130,250 115,265 85,278 C130,278 150,265 180,270
+               C160,285 150,300 125,315 C165,310 185,295 210,295
+               C260,260 290,220 295,185 Z" fill="url(#wingGradLeft)"/>
+      <path d="M295,185 C225,168 165,172 90,135" fill="none" stroke="#bfdbfe" stroke-width="1.2" opacity="0.55"/>
+      <path d="M280,210 C220,200 175,205 130,195" fill="none" stroke="#93c5fd" stroke-width="1" opacity="0.4"/>
+      <path d="M255,250 C210,248 180,255 145,250" fill="none" stroke="#c4b5fd" stroke-width="1" opacity="0.4"/>
+      <path d="M225,285 C195,288 175,292 150,295" fill="none" stroke="#a78bfa" stroke-width="1" opacity="0.35"/>
+    </g>
+    <g class="trb-wing right">
+      <path d="M305,185 C380,165 450,175 570,90 C555,140 530,160 545,175 C505,175 480,165 455,185
+               C490,195 505,215 540,225 C495,230 470,220 440,235
+               C470,250 485,265 515,278 C470,278 450,265 420,270
+               C440,285 450,300 475,315 C435,310 415,295 390,295
+               C340,260 310,220 305,185 Z" fill="url(#wingGradRight)"/>
+      <path d="M305,185 C375,168 435,172 510,135" fill="none" stroke="#e9d5ff" stroke-width="1.2" opacity="0.55"/>
+      <path d="M320,210 C380,200 425,205 470,195" fill="none" stroke="#d8b4fe" stroke-width="1" opacity="0.4"/>
+      <path d="M345,250 C390,248 420,255 455,250" fill="none" stroke="#93c5fd" stroke-width="1" opacity="0.4"/>
+      <path d="M375,285 C405,288 425,292 450,295" fill="none" stroke="#7dd3fc" stroke-width="1" opacity="0.35"/>
+    </g>
+
+    <g class="trb-shard s1" filter="url(#glowBlue)"><polygon points="55,250 70,225 80,255 62,275" fill="#60a5fa" opacity="0.85"/></g>
+    <g class="trb-shard s2" filter="url(#glowPurple)"><polygon points="545,260 560,235 572,265 552,285" fill="#c084fc" opacity="0.85"/></g>
+    <g class="trb-shard s3" filter="url(#glowGold)"><polygon points="300,40 312,18 322,42 305,58" fill="#fbbf24" opacity="0.85"/></g>
+    <g class="trb-shard s4" filter="url(#glowBlue)"><polygon points="110,400 122,382 132,404 116,418" fill="#93c5fd" opacity="0.75"/></g>
+    <g class="trb-shard s5" filter="url(#glowPurple)"><polygon points="490,400 502,382 512,404 496,418" fill="#d8b4fe" opacity="0.75"/></g>
+    <g class="trb-shard s6" filter="url(#glowBlue)"><polygon points="300,470 314,450 324,474 306,490" fill="#7dd3fc" opacity="0.7"/></g>
+
+    <g fill="#a5b4fc">
+      <circle class="trb-particle" cx="120" cy="480" r="2.4" style="animation-duration:4.5s;animation-delay:0s"/>
+      <circle class="trb-particle" cx="180" cy="500" r="1.8" style="animation-duration:5.5s;animation-delay:1s"/>
+      <circle class="trb-particle" cx="420" cy="490" r="2.2" style="animation-duration:4.8s;animation-delay:.6s"/>
+      <circle class="trb-particle" cx="470" cy="470" r="1.6" style="animation-duration:6s;animation-delay:1.8s"/>
+      <circle class="trb-particle" cx="300" cy="510" r="2" style="animation-duration:5s;animation-delay:2.4s"/>
+      <circle class="trb-particle" cx="230" cy="495" r="1.4" style="animation-duration:5.2s;animation-delay:.3s"/>
+      <circle class="trb-particle" cx="350" cy="505" r="1.7" style="animation-duration:4.6s;animation-delay:1.4s"/>
+    </g>
+
+    <g stroke-width="2" fill="none">
+      <path class="trb-bolt b1" filter="url(#glowBlue)" stroke="#bfdbfe" d="M85,180 L100,210 L88,215 L108,250"/>
+      <path class="trb-bolt b2" filter="url(#glowPurple)" stroke="#e9d5ff" d="M500,190 L485,220 L498,225 L478,260"/>
+      <path class="trb-bolt b3" filter="url(#glowGold)" stroke="#fde68a" d="M300,60 L292,85 L304,88 L295,110"/>
+    </g>
+
+    <g class="trb-crown-glow" filter="url(#glowGold)" transform="translate(300,38)">
+      <polygon points="-58,32 -58,8 -36,22 -18,-8 0,16 18,-8 36,22 58,8 58,32" fill="url(#metalGold)" stroke="#7c4a03" stroke-width="1.5"/>
+      <rect x="-58" y="30" width="116" height="10" rx="2" fill="url(#metalGold)" stroke="#7c4a03" stroke-width="1"/>
+      <circle cx="-36" cy="14" r="5" fill="#fde68a"/><circle cx="0" cy="-2" r="6" fill="#fef3c7"/><circle cx="36" cy="14" r="5" fill="#fde68a"/>
+      <circle cx="0" cy="-2" r="11" fill="none" stroke="#fff7ed" stroke-width="1" opacity="0.7"/>
+    </g>
+
+    <ellipse cx="300" cy="255" rx="280" ry="210" fill="url(#plateGrad)"/>
+
+    <g filter="url(#glowBlue)"><text x="300" y="151" text-anchor="middle" font-family="Orbitron, sans-serif" font-weight="900" font-size="86" letter-spacing="4" fill="#1d4ed8" opacity="0.5">TRUTH</text></g>
+    <text x="300" y="148" text-anchor="middle" font-family="Orbitron, sans-serif" font-weight="900" font-size="86" letter-spacing="4" fill="url(#metalBlue)" stroke="#0b1d4d" stroke-width="2.5" paint-order="stroke">TRUTH</text>
+    <text x="299" y="146" text-anchor="middle" font-family="Orbitron, sans-serif" font-weight="900" font-size="86" letter-spacing="4" fill="none" stroke="#eff6ff" stroke-width="1" opacity="0.7">TRUTH</text>
+    <g clip-path="url(#textClipTruth)"><rect class="trb-shine" x="0" y="60" width="90" height="120" fill="rgba(255,255,255,0.85)" opacity="0.9"/></g>
+
+    <g filter="url(#glowGold)"><text x="300" y="271" text-anchor="middle" font-family="Cinzel, serif" font-weight="900" font-size="78" letter-spacing="8" fill="#92400e" opacity="0.5">ROYALE</text></g>
+    <text x="300" y="268" text-anchor="middle" font-family="Cinzel, serif" font-weight="900" font-size="78" letter-spacing="8" fill="url(#metalGold)" stroke="#3f1f02" stroke-width="2.5" paint-order="stroke">ROYALE</text>
+    <text x="299" y="266" text-anchor="middle" font-family="Cinzel, serif" font-weight="900" font-size="78" letter-spacing="8" fill="none" stroke="#fffbeb" stroke-width="1" opacity="0.75">ROYALE</text>
+    <g clip-path="url(#textClipRoyale)"><rect class="trb-shine" x="0" y="195" width="90" height="110" fill="rgba(255,255,255,0.9)" opacity="0.9" style="animation-delay:1.2s"/></g>
+
+    <g filter="url(#glowPurple)"><text x="300" y="395" text-anchor="middle" font-family="Orbitron, sans-serif" font-weight="900" font-size="86" letter-spacing="4" fill="#581c87" opacity="0.5">BATTLE</text></g>
+    <text x="300" y="392" text-anchor="middle" font-family="Orbitron, sans-serif" font-weight="900" font-size="86" letter-spacing="4" fill="url(#metalPurple)" stroke="#2e0b4d" stroke-width="2.5" paint-order="stroke">BATTLE</text>
+    <text x="299" y="390" text-anchor="middle" font-family="Orbitron, sans-serif" font-weight="900" font-size="86" letter-spacing="4" fill="none" stroke="#faf5ff" stroke-width="1" opacity="0.7">BATTLE</text>
+    <g clip-path="url(#textClipBattle)"><rect class="trb-shine" x="0" y="335" width="90" height="120" fill="rgba(255,255,255,0.9)" opacity="0.9" style="animation-delay:2.4s"/></g>
+
+    <ellipse cx="300" cy="430" rx="220" ry="14" fill="#7c3aed" opacity="0.25" filter="url(#softBlur8)"/>
+  </svg>
+</div>
+<div class="subtitle-text">Truth vs Lie | Light vs Dark | Reality vs Illusion</div>
+<div class="tutorial-text">Deploy cards using Elixir. Destroy the enemy King Tower to win!<br>Princess Towers guard the King. Take them down first!<br>Elixir regenerates over time. Manage your resources wisely.</div>
+<button class="btn" onclick="game.showDeckBuilder()">⚔️ START BATTLE</button>
+<button class="btn btn-secondary" onclick="game.showCardList()">📋 VIEW CARDS</button>
+</div>
+<div class="screen-overlay hidden" id="deck-screen">
+<div style="font-family:'Orbitron';font-size:20px;font-weight:700;margin-bottom:8px;">BUILD YOUR DECK</div>
+<div class="selected-count" id="deck-count">Selected: 0 / 8</div>
+<div class="deck-builder" id="deck-builder"></div>
+<button class="btn" id="start-battle-btn" onclick="game.startBattle()" disabled>⚔️ START BATTLE</button>
+<button class="btn btn-secondary" onclick="game.showStartScreen()">← BACK</button>
+</div>
+<div class="screen-overlay hidden" id="cards-screen">
+<div style="font-family:'Orbitron';font-size:20px;font-weight:700;margin-bottom:8px;">ALL CARDS</div>
+<div class="deck-builder" id="all-cards-list" style="max-height:400px;"></div>
+<button class="btn btn-secondary" onclick="game.showStartScreen()">← BACK</button>
+</div>
+<div class="screen-overlay hidden" id="result-screen">
+<div class="result-title" id="result-title">VICTORY!</div>
+<div class="crown-count" id="result-crowns">👑 3 - 1</div>
+<div style="font-size:14px;color:#888;margin-bottom:16px;" id="result-desc">Truth has prevailed over lies!</div>
+<button class="btn" onclick="game.showDeckBuilder()">🔄 PLAY AGAIN</button>
+<button class="btn btn-secondary" onclick="game.showStartScreen()">🏠 MAIN MENU</button>
+</div>
+</div>
+<script>
+const CONFIG={CANVAS_WIDTH:500,CANVAS_HEIGHT:900,ELIXIR_MAX:10,ELIXIR_REGEN:0.35,BATTLE_TIME:180,OVERTIME_TIME:60,TOWER_KING_HP:4000,TOWER_PRINCESS_HP:2400,TOWER_KING_DAMAGE:100,TOWER_PRINCESS_DAMAGE:60,TOWER_RANGE:80,TOWER_ATTACK_SPEED:0.8};
+
+// ==================== IMPROVED CARD DEFINITIONS ====================
+// Characters are more grounded in real-world concepts of truth vs deception
+
+const ALL_CARDS=[
+// === TROOPS (Truth/Light Side themed) ===
+{id:'truth_guardian',name:'Truth Guardian',icon:'🛡️',cost:5,type:'troop',hp:2800,damage:180,attackSpeed:1.5,moveSpeed:1.2,range:0,target:'ground',special:'Immune to first spell damage',desc:'A steadfast defender of truth. High HP tank that resists initial spell damage.',color:'#3b82f6'},
+{id:'light_seeker',name:'Light Seeker',icon:'🔦',cost:4,type:'troop',hp:800,damage:220,attackSpeed:1.2,moveSpeed:1.8,range:120,target:'air_ground',special:'Reveals invisible units in range',desc:'Illuminates the battlefield, revealing hidden enemies and dealing ranged damage.',color:'#f59e0b'},
+{id:'whistleblower',name:'Whistleblower',icon:'📣',cost:3,type:'troop',hp:500,damage:300,attackSpeed:2.0,moveSpeed:1.0,range:0,target:'ground',special:'Deals 3x damage to buildings',desc:'Exposes corruption and deals massive damage to enemy structures.',color:'#eab308'},
+{id:'fact_checker',name:'Fact Checker',icon:'✅',cost:3,type:'troop',hp:700,damage:160,attackSpeed:1.0,moveSpeed:1.5,range:100,target:'air_ground',special:'Stuns enemy for 0.5s every 3 hits',desc:'Verifies facts and stuns enemies with the power of verified truth.',color:'#06b6d4'},
+{id:'investigator',name:'Investigator',icon:'🔍',cost:4,type:'troop',hp:650,damage:130,attackSpeed:0.9,moveSpeed:1.6,range:110,target:'air_ground',special:'50% chance to dodge attacks',desc:'A sharp mind that sees through deception, dodging enemy attacks.',color:'#6366f1'},
+{id:'philosopher',name:'Philosopher',icon:'🎓',cost:6,type:'troop',hp:2000,damage:250,attackSpeed:1.8,moveSpeed:0.9,range:90,target:'air_ground',special:'Reduces enemy damage by 30%',desc:'The ultimate truth warrior. Weakens enemies with deep questioning.',color:'#fbbf24'},
+
+// === TROOPS (Deception/Dark Side themed) ===
+{id:'propagandist',name:'Propagandist',icon:'📢',cost:2,type:'troop',hp:350,damage:40,attackSpeed:0.6,moveSpeed:2.5,range:0,target:'ground',special:'Buffs nearby allies +20% damage',desc:'Spreads misinformation to empower allies. Fast swarm unit.',color:'#f97316'},
+{id:'deceiver',name:'Deceiver',icon:'🎭',cost:3,type:'troop',hp:600,damage:90,attackSpeed:1.0,moveSpeed:2.0,range:0,target:'ground',special:'Spawns 2 clones with 30% HP on death',desc:'Master of illusion. Splits into weaker clones when destroyed.',color:'#a855f7'},
+{id:'manipulator',name:'Manipulator',icon:'🧠',cost:5,type:'troop',hp:1100,damage:190,attackSpeed:1.3,moveSpeed:1.1,range:0,target:'ground',special:'Reflects 30% damage back to attacker',desc:'Twists minds, causing attackers to hurt themselves.',color:'#ec4899'},
+{id:'distraction',name:'Distraction',icon:'🎪',cost:2,type:'troop',hp:300,damage:50,attackSpeed:1.0,moveSpeed:3.0,range:0,target:'ground',special:'Distracts enemies, they chase it first',desc:'A flashy diversion that draws enemy attention. Very fast.',color:'#ef4444'},
+{id:'decoy',name:'Decoy',icon:'🪵',cost:3,type:'troop',hp:1000,damage:0,attackSpeed:0,moveSpeed:0.5,range:0,target:'ground',special:'Taunts all enemies in range 80 to attack it',desc:'A false target that draws all enemy fire. No attack power.',color:'#d97706'},
+{id:'conformist',name:'Conformist',icon:'🐑',cost:2,type:'troop',hp:450,damage:70,attackSpeed:0.7,moveSpeed:2.0,range:0,target:'ground',special:'Thinks it deals double damage (visual only)',desc:'Overconfident follower. Weak but fast and cheap.',color:'#f472b6'},
+{id:'selective_perceiver',name:'Selective Perceiver',icon:'🎯',cost:2,type:'troop',hp:400,damage:110,attackSpeed:0.8,moveSpeed:2.2,range:0,target:'ground',special:'Always targets lowest HP enemy first',desc:'Only sees what confirms its beliefs. Fast attacker.',color:'#14b8a6'},
+
+// === BUILDINGS ===
+{id:'beacon_of_truth',name:'Beacon of Truth',icon:'🗼',cost:4,type:'building',hp:1200,damage:150,attackSpeed:0.7,range:140,lifetime:30,target:'air_ground',special:'Heals nearby allies 5 HP/sec',desc:'A tower of enlightenment that heals and supports allies.',color:'#22c55e'},
+{id:'echo_chamber',name:'Echo Chamber',icon:'🔊',cost:3,type:'building',hp:900,damage:0,attackSpeed:0,range:0,lifetime:25,target:'none',special:'Spawns a Propagandist unit every 5s',desc:'Amplifies the same message endlessly, spawning reinforcements.',color:'#8b5cf6'},
+
+// === SPELLS ===
+{id:'revelation',name:'Revelation',icon:'💡',cost:4,type:'spell',damage:450,radius:60,target:'air_ground',special:'Deals 2x damage to buildings',desc:'A burst of clarity that exposes and destroys structures.',color:'#f97316'},
+{id:'confusion',name:'Confusion',icon:'💨',cost:3,type:'spell',damage:80,radius:50,target:'air_ground',special:'Pushes enemies back and stuns them',desc:'Clouds judgment, pushing enemies away and stunning them.',color:'#6b7280'},
+{id:'silencing',name:'Silencing',icon:'🚫',cost:2,type:'spell',damage:200,radius:40,target:'ground',special:'Instant kill on troops under 300 HP',desc:'Silences weak enemies, removing them from the battlefield.',color:'#dc2626'},
+{id:'whirlwind_of_lies',name:'Whirlwind of Lies',icon:'🌪️',cost:3,type:'spell',damage:150,radius:55,target:'air_ground',special:'Pulls enemies to center before damage',desc:'Spins enemies around with disorienting falsehoods.',color:'#0ea5e9'},
+{id:'forgetfulness',name:'Forgetfulness',icon:'❓',cost:1,type:'spell',damage:0,radius:70,target:'air_ground',special:'Heals all allies in radius for 250 HP',desc:'Makes allies forget their wounds, healing them significantly.',color:'#84cc16'}
+];
+
+// ==================== PREMIUM PORTRAIT ART ENGINE ====================
+// Each character gets a hand-coded layered illustration (gradients, glows,
+// silhouette work) rendered to an offscreen canvas and cached as a bitmap.
+// This replaces flat emoji icons with detailed cyber-fantasy portraits.
+
+const PORTRAIT_SIZE = 256;
+const PORTRAIT_CACHE = {};
+
+function pShade(hex, amt) {
+  hex = hex.replace('#', '');
+  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+  const num = parseInt(hex, 16);
+  let r = (num >> 16) + amt, g = ((num >> 8) & 0xff) + amt, b = (num & 0xff) + amt;
+  r = Math.max(0, Math.min(255, r)); g = Math.max(0, Math.min(255, g)); b = Math.max(0, Math.min(255, b));
+  return '#' + (r << 16 | g << 8 | b).toString(16).padStart(6, '0');
+}
+function pLighten(hex, amt) { return pShade(hex, amt); }
+function pDarken(hex, amt) { return pShade(hex, -amt); }
+function hexA(hex, alpha) {
+  const a = Math.round(alpha * 255).toString(16).padStart(2, '0');
+  return hex + a;
+}
+
+// ---- shared rendering helpers ----
+function bgFrame(ctx, s, c1, c2) {
+  const g = ctx.createRadialGradient(s * 0.5, s * 0.38, s * 0.05, s * 0.5, s * 0.5, s * 0.72);
+  g.addColorStop(0, c1);
+  g.addColorStop(1, c2);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, s, s);
+  // faint hex/tech grid backdrop
+  ctx.save();
+  ctx.globalAlpha = 0.10;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1;
+  for (let i = 0; i < s; i += 18) {
+    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, s); ctx.stroke();
+  }
+  ctx.restore();
+  // vignette
+  const vg = ctx.createRadialGradient(s * 0.5, s * 0.5, s * 0.3, s * 0.5, s * 0.5, s * 0.72);
+  vg.addColorStop(0, 'rgba(0,0,0,0)');
+  vg.addColorStop(1, 'rgba(0,0,0,0.55)');
+  ctx.fillStyle = vg;
+  ctx.fillRect(0, 0, s, s);
+}
+
+function neonGlowStroke(ctx, drawFn, color, blur, width) {
+  ctx.save();
+  ctx.shadowBlur = blur;
+  ctx.shadowColor = color;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  drawFn();
+  ctx.restore();
+}
+
+function skinFace(ctx, cx, cy, w, h, skinBase, skinShade) {
+  const g = ctx.createLinearGradient(cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2);
+  g.addColorStop(0, pLighten(skinBase, 25));
+  g.addColorStop(0.5, skinBase);
+  g.addColorStop(1, skinShade);
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, w / 2, h / 2, 0, 0, Math.PI * 2);
+  ctx.fillStyle = g;
+  ctx.fill();
+}
+
+function visorEyes(ctx, cx, cy, w, color) {
+  neonGlowStroke(ctx, () => {
+    ctx.beginPath();
+    ctx.moveTo(cx - w / 2, cy);
+    ctx.lineTo(cx - w / 6, cy + 2);
+    ctx.moveTo(cx + w / 6, cy + 2);
+    ctx.lineTo(cx + w / 2, cy);
+    ctx.stroke();
+  }, color, 12, 4);
+}
+
+function particleField(ctx, s, count, color, seedFn) {
+  ctx.save();
+  for (let i = 0; i < count; i++) {
+    const a = seedFn(i);
+    const x = s * (0.1 + 0.8 * ((Math.sin(i * 12.9898) * 43758.5453) % 1 + 1) % 1);
+    const y = s * (0.08 + 0.5 * ((Math.sin(i * 78.233) * 12543.31) % 1 + 1) % 1);
+    const r = 1 + (i % 3);
+    ctx.globalAlpha = 0.35 + 0.4 * ((i % 5) / 5);
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = color;
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function rarityFrame(ctx, s, color, rarity) {
+  ctx.save();
+  ctx.shadowBlur = rarity === 'legendary' ? 22 : 12;
+  ctx.shadowColor = color;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = rarity === 'legendary' ? 6 : 4;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(4, 4, s - 8, s - 8, 14);
+  else ctx.rect(4, 4, s - 8, s - 8);
+  ctx.stroke();
+  if (rarity === 'legendary') {
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = hexA('#ffffff', 0.5);
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(9, 9, s - 18, s - 18, 11);
+    else ctx.rect(9, 9, s - 18, s - 18);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// ==================== INDIVIDUAL PORTRAIT ILLUSTRATIONS ====================
+
+const PORTRAIT_PAINTERS = {
+
+  // ---- Truth Guardian: elite futuristic paladin, blue energy armor, holographic shield ----
+  truth_guardian(ctx, s) {
+    bgFrame(ctx, s, '#1e3a8a', '#040714');
+    particleField(ctx, s, 18, '#60a5fa', i => i);
+    const cx = s * 0.52, cy = s * 0.56;
+    // holographic shield (background, large, behind shoulder)
+    ctx.save();
+    ctx.translate(cx - s * 0.22, cy + s * 0.02);
+    ctx.rotate(-0.12);
+    const shieldGrad = ctx.createLinearGradient(0, -s * 0.3, 0, s * 0.3);
+    shieldGrad.addColorStop(0, hexA('#93c5fd', 0.85));
+    shieldGrad.addColorStop(1, hexA('#1d4ed8', 0.35));
+    ctx.beginPath();
+    ctx.moveTo(0, -s * 0.32);
+    ctx.bezierCurveTo(s * 0.22, -s * 0.28, s * 0.24, s * 0.05, 0, s * 0.34);
+    ctx.bezierCurveTo(-s * 0.24, s * 0.05, -s * 0.22, -s * 0.28, 0, -s * 0.32);
+    ctx.closePath();
+    ctx.fillStyle = shieldGrad;
+    ctx.shadowBlur = 26; ctx.shadowColor = '#60a5fa';
+    ctx.fill();
+    ctx.lineWidth = 3; ctx.strokeStyle = '#bfdbfe';
+    ctx.stroke();
+    // hex pattern inside shield
+    ctx.strokeStyle = hexA('#1e40af', 0.6); ctx.lineWidth = 1.5;
+    for (let i = -2; i <= 2; i++) {
+      ctx.beginPath(); ctx.moveTo(i * s * 0.06, -s * 0.26); ctx.lineTo(i * s * 0.06, s * 0.26); ctx.stroke();
+    }
+    ctx.restore();
+
+    // shoulder pauldron (right, behind head)
+    const pauldGrad = ctx.createRadialGradient(cx + s * 0.18, cy - s * 0.05, 4, cx + s * 0.2, cy, s * 0.16);
+    pauldGrad.addColorStop(0, '#bfdbfe');
+    pauldGrad.addColorStop(1, '#1e3a8a');
+    ctx.beginPath();
+    ctx.ellipse(cx + s * 0.2, cy - s * 0.02, s * 0.13, s * 0.15, 0.3, 0, Math.PI * 2);
+    ctx.fillStyle = pauldGrad;
+    ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = '#93c5fd'; ctx.stroke();
+
+    // armored torso
+    const torsoGrad = ctx.createLinearGradient(cx - s * 0.18, cy, cx + s * 0.18, cy + s * 0.3);
+    torsoGrad.addColorStop(0, '#3b82f6');
+    torsoGrad.addColorStop(0.5, '#1e40af');
+    torsoGrad.addColorStop(1, '#0f1d4a');
+    ctx.beginPath();
+    ctx.moveTo(cx - s * 0.16, cy + s * 0.02);
+    ctx.lineTo(cx - s * 0.2, cy + s * 0.34);
+    ctx.lineTo(cx + s * 0.2, cy + s * 0.34);
+    ctx.lineTo(cx + s * 0.16, cy + s * 0.02);
+    ctx.quadraticCurveTo(cx, cy - s * 0.04, cx - s * 0.16, cy + s * 0.02);
+    ctx.fillStyle = torsoGrad;
+    ctx.fill();
+    // chest emblem - energy core
+    ctx.beginPath();
+    ctx.arc(cx, cy + s * 0.13, s * 0.035, 0, Math.PI * 2);
+    ctx.fillStyle = '#bfdbfe';
+    ctx.shadowBlur = 16; ctx.shadowColor = '#60a5fa';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    // armor seams (energy lines)
+    neonGlowStroke(ctx, () => {
+      ctx.beginPath();
+      ctx.moveTo(cx, cy + s * 0.02); ctx.lineTo(cx, cy + s * 0.3);
+      ctx.moveTo(cx - s * 0.12, cy + s * 0.08); ctx.lineTo(cx - s * 0.15, cy + s * 0.3);
+      ctx.moveTo(cx + s * 0.12, cy + s * 0.08); ctx.lineTo(cx + s * 0.15, cy + s * 0.3);
+      ctx.stroke();
+    }, '#60a5fa', 6, 1.5);
+
+    // helmet/head
+    const headGrad = ctx.createLinearGradient(cx - s * 0.1, cy - s * 0.22, cx + s * 0.1, cy - s * 0.04);
+    headGrad.addColorStop(0, '#dbeafe');
+    headGrad.addColorStop(0.5, '#60a5fa');
+    headGrad.addColorStop(1, '#1d4ed8');
+    ctx.beginPath();
+    ctx.moveTo(cx - s * 0.09, cy - s * 0.04);
+    ctx.quadraticCurveTo(cx - s * 0.1, cy - s * 0.22, cx, cy - s * 0.25);
+    ctx.quadraticCurveTo(cx + s * 0.1, cy - s * 0.22, cx + s * 0.09, cy - s * 0.04);
+    ctx.quadraticCurveTo(cx, cy, cx - s * 0.09, cy - s * 0.04);
+    ctx.fillStyle = headGrad;
+    ctx.fill();
+    // crest fin on helmet
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - s * 0.25);
+    ctx.lineTo(cx - s * 0.015, cy - s * 0.34);
+    ctx.lineTo(cx + s * 0.015, cy - s * 0.34);
+    ctx.closePath();
+    ctx.fillStyle = '#93c5fd';
+    ctx.shadowBlur = 10; ctx.shadowColor = '#60a5fa';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    // visor
+    visorEyes(ctx, cx, cy - s * 0.13, s * 0.1, '#dbeafe');
+
+    rarityFrame(ctx, s, '#3b82f6', 'epic');
+  },
+
+  // ---- Light Seeker: cyber detective, glowing scanner visor, floating search drone ----
+  light_seeker(ctx, s) {
+    bgFrame(ctx, s, '#78350f', '#0a0a14');
+    particleField(ctx, s, 16, '#fbbf24', i => i);
+    const cx = s * 0.46, cy = s * 0.58;
+
+    // floating search drone (upper right)
+    ctx.save();
+    const dx = cx + s * 0.26, dy = cy - s * 0.28;
+    ctx.translate(dx, dy);
+    const droneGrad = ctx.createRadialGradient(-3, -3, 1, 0, 0, s * 0.07);
+    droneGrad.addColorStop(0, '#fef3c7');
+    droneGrad.addColorStop(1, '#1e3a8a');
+    ctx.beginPath();
+    ctx.ellipse(0, 0, s * 0.07, s * 0.045, 0, 0, Math.PI * 2);
+    ctx.fillStyle = droneGrad;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(0, 0, s * 0.022, 0, Math.PI * 2);
+    ctx.fillStyle = '#fbbf24';
+    ctx.shadowBlur = 14; ctx.shadowColor = '#fbbf24';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    neonGlowStroke(ctx, () => {
+      ctx.beginPath();
+      ctx.moveTo(0, s * 0.02);
+      ctx.lineTo(-s * 0.05, s * 0.18);
+      ctx.moveTo(0, s * 0.02);
+      ctx.lineTo(s * 0.02, s * 0.2);
+      ctx.stroke();
+    }, '#fbbf24', 8, 1.2);
+    // drone scan cone
+    const coneGrad = ctx.createLinearGradient(0, 0, 0, s * 0.3);
+    coneGrad.addColorStop(0, hexA('#fde68a', 0.4));
+    coneGrad.addColorStop(1, hexA('#fde68a', 0));
+    ctx.beginPath();
+    ctx.moveTo(0, s * 0.02);
+    ctx.lineTo(-s * 0.07, s * 0.3);
+    ctx.lineTo(s * 0.07, s * 0.3);
+    ctx.closePath();
+    ctx.fillStyle = coneGrad;
+    ctx.fill();
+    ctx.restore();
+
+    // long coat torso
+    const coatGrad = ctx.createLinearGradient(cx - s * 0.2, cy, cx + s * 0.2, cy + s * 0.35);
+    coatGrad.addColorStop(0, '#475569');
+    coatGrad.addColorStop(1, '#0f172a');
+    ctx.beginPath();
+    ctx.moveTo(cx - s * 0.18, cy);
+    ctx.lineTo(cx - s * 0.24, cy + s * 0.34);
+    ctx.lineTo(cx + s * 0.24, cy + s * 0.34);
+    ctx.lineTo(cx + s * 0.18, cy);
+    ctx.quadraticCurveTo(cx, cy - s * 0.03, cx - s * 0.18, cy);
+    ctx.fillStyle = coatGrad;
+    ctx.fill();
+    // gold trim
+    neonGlowStroke(ctx, () => {
+      ctx.beginPath();
+      ctx.moveTo(cx - s * 0.18, cy + s * 0.01);
+      ctx.lineTo(cx - s * 0.23, cy + s * 0.33);
+      ctx.moveTo(cx + s * 0.18, cy + s * 0.01);
+      ctx.lineTo(cx + s * 0.23, cy + s * 0.33);
+      ctx.stroke();
+    }, '#fbbf24', 5, 1.2);
+
+    // head
+    skinFace(ctx, cx, cy - s * 0.13, s * 0.18, s * 0.22, '#d6a87a', '#8a5a35');
+    // scanner visor band glowing gold-blue
+    const visorGrad = ctx.createLinearGradient(cx - s * 0.1, cy - s * 0.17, cx + s * 0.1, cy - s * 0.13);
+    visorGrad.addColorStop(0, '#3b82f6');
+    visorGrad.addColorStop(0.5, '#fbbf24');
+    visorGrad.addColorStop(1, '#3b82f6');
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(cx - s * 0.1, cy - s * 0.18, s * 0.2, s * 0.05, 6) : ctx.rect(cx - s * 0.1, cy - s * 0.18, s * 0.2, s * 0.05);
+    ctx.fillStyle = visorGrad;
+    ctx.shadowBlur = 18; ctx.shadowColor = '#fbbf24';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    // hood/collar
+    ctx.beginPath();
+    ctx.moveTo(cx - s * 0.16, cy - s * 0.02);
+    ctx.quadraticCurveTo(cx, cy - s * 0.26, cx + s * 0.16, cy - s * 0.02);
+    ctx.lineTo(cx + s * 0.12, cy + s * 0.04);
+    ctx.quadraticCurveTo(cx, cy - s * 0.12, cx - s * 0.12, cy + s * 0.04);
+    ctx.closePath();
+    ctx.fillStyle = pDarken('#475569', 25);
+    ctx.fill();
+
+    rarityFrame(ctx, s, '#f59e0b', 'rare');
+  },
+
+  // ---- Whistleblower: rebel data hacker, holographic documents, neon comm device ----
+  whistleblower(ctx, s) {
+    bgFrame(ctx, s, '#713f12', '#0a0908');
+    particleField(ctx, s, 14, '#eab308', i => i);
+    const cx = s * 0.5, cy = s * 0.6;
+
+    // holographic documents floating around
+    [[-0.28, -0.18, -0.15], [0.27, -0.1, 0.12], [-0.2, 0.12, -0.08]].forEach(([ox, oy, rot]) => {
+      ctx.save();
+      ctx.translate(cx + s * ox, cy + s * oy);
+      ctx.rotate(rot);
+      const docGrad = ctx.createLinearGradient(0, -s * 0.06, 0, s * 0.08);
+      docGrad.addColorStop(0, hexA('#fde68a', 0.7));
+      docGrad.addColorStop(1, hexA('#eab308', 0.25));
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(-s * 0.05, -s * 0.07, s * 0.1, s * 0.14, 3) : ctx.rect(-s * 0.05, -s * 0.07, s * 0.1, s * 0.14);
+      ctx.fillStyle = docGrad;
+      ctx.shadowBlur = 10; ctx.shadowColor = '#facc15';
+      ctx.fill();
+      ctx.strokeStyle = hexA('#fef9c3', 0.8); ctx.lineWidth = 1;
+      for (let i = 0; i < 4; i++) {
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.035, -s * 0.04 + i * s * 0.03);
+        ctx.lineTo(s * 0.035, -s * 0.04 + i * s * 0.03);
+        ctx.stroke();
+      }
+      ctx.restore();
+    });
+
+    // dynamic action pose - angled body
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(-0.06);
+    const jacketGrad = ctx.createLinearGradient(-s * 0.2, 0, s * 0.2, s * 0.32);
+    jacketGrad.addColorStop(0, '#92400e');
+    jacketGrad.addColorStop(1, '#1c1006');
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.17, 0);
+    ctx.lineTo(-s * 0.22, s * 0.32);
+    ctx.lineTo(s * 0.22, s * 0.32);
+    ctx.lineTo(s * 0.17, 0);
+    ctx.quadraticCurveTo(0, -s * 0.03, -s * 0.17, 0);
+    ctx.fillStyle = jacketGrad;
+    ctx.fill();
+    ctx.restore();
+
+    // neon communication device held up (left hand raised)
+    ctx.save();
+    ctx.translate(cx - s * 0.24, cy + s * 0.1);
+    ctx.rotate(-0.4);
+    const devGrad = ctx.createLinearGradient(0, -s * 0.05, 0, s * 0.05);
+    devGrad.addColorStop(0, '#fef08a');
+    devGrad.addColorStop(1, '#854d0e');
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(-s * 0.03, -s * 0.05, s * 0.06, s * 0.1, 3) : ctx.rect(-s * 0.03, -s * 0.05, s * 0.06, s * 0.1);
+    ctx.fillStyle = devGrad;
+    ctx.shadowBlur = 16; ctx.shadowColor = '#facc15';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+
+    // head with determined expression, mask/bandana
+    skinFace(ctx, cx, cy - s * 0.13, s * 0.17, s * 0.2, '#c08552', '#6e4321');
+    ctx.beginPath();
+    ctx.moveTo(cx - s * 0.1, cy - s * 0.16);
+    ctx.lineTo(cx + s * 0.1, cy - s * 0.16);
+    ctx.lineTo(cx + s * 0.08, cy - s * 0.08);
+    ctx.lineTo(cx - s * 0.08, cy - s * 0.08);
+    ctx.closePath();
+    ctx.fillStyle = '#1c1917';
+    ctx.fill();
+    visorEyes(ctx, cx, cy - s * 0.16, s * 0.07, '#facc15');
+    // bandana knot
+    ctx.beginPath();
+    ctx.arc(cx + s * 0.1, cy - s * 0.15, s * 0.015, 0, Math.PI * 2);
+    ctx.fillStyle = '#facc15';
+    ctx.fill();
+
+    rarityFrame(ctx, s, '#eab308', 'rare');
+  },
+
+  // ---- Fact Checker: AI intelligence analyst, floating screens, green verification ----
+  fact_checker(ctx, s) {
+    bgFrame(ctx, s, '#064e3b', '#020a08');
+    particleField(ctx, s, 16, '#22d3ee', i => i);
+    const cx = s * 0.5, cy = s * 0.58;
+
+    // floating transparent screens
+    [[-0.27, -0.2], [0.28, -0.16], [-0.3, 0.05]].forEach(([ox, oy], idx) => {
+      ctx.save();
+      ctx.translate(cx + s * ox, cy + s * oy);
+      const scrGrad = ctx.createLinearGradient(-s * 0.06, -s * 0.05, s * 0.06, s * 0.05);
+      scrGrad.addColorStop(0, hexA('#6ee7b7', 0.5));
+      scrGrad.addColorStop(1, hexA('#06b6d4', 0.15));
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(-s * 0.07, -s * 0.05, s * 0.14, s * 0.1, 3) : ctx.rect(-s * 0.07, -s * 0.05, s * 0.14, s * 0.1);
+      ctx.fillStyle = scrGrad;
+      ctx.strokeStyle = hexA('#a7f3d0', 0.8);
+      ctx.lineWidth = 1;
+      ctx.shadowBlur = 10; ctx.shadowColor = '#22d3ee';
+      ctx.fill(); ctx.stroke();
+      ctx.shadowBlur = 0;
+      // checkmark on screen
+      ctx.beginPath();
+      ctx.moveTo(-s * 0.03, 0);
+      ctx.lineTo(-s * 0.008, s * 0.02);
+      ctx.lineTo(s * 0.035, -s * 0.025);
+      ctx.strokeStyle = '#4ade80';
+      ctx.lineWidth = 2.5;
+      ctx.shadowBlur = 8; ctx.shadowColor = '#4ade80';
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    // tactical suit torso
+    const suitGrad = ctx.createLinearGradient(cx - s * 0.18, cy, cx + s * 0.18, cy + s * 0.3);
+    suitGrad.addColorStop(0, '#0f766e');
+    suitGrad.addColorStop(1, '#022c22');
+    ctx.beginPath();
+    ctx.moveTo(cx - s * 0.16, cy);
+    ctx.lineTo(cx - s * 0.2, cy + s * 0.32);
+    ctx.lineTo(cx + s * 0.2, cy + s * 0.32);
+    ctx.lineTo(cx + s * 0.16, cy);
+    ctx.quadraticCurveTo(cx, cy - s * 0.03, cx - s * 0.16, cy);
+    ctx.fillStyle = suitGrad;
+    ctx.fill();
+    // green verification circuit lines
+    neonGlowStroke(ctx, () => {
+      ctx.beginPath();
+      ctx.moveTo(cx, cy + s * 0.02); ctx.lineTo(cx, cy + s * 0.14);
+      ctx.lineTo(cx - s * 0.08, cy + s * 0.2);
+      ctx.moveTo(cx, cy + s * 0.14); ctx.lineTo(cx + s * 0.08, cy + s * 0.2);
+      ctx.stroke();
+    }, '#34d399', 7, 1.5);
+    ctx.beginPath();
+    ctx.arc(cx, cy + s * 0.12, s * 0.025, 0, Math.PI * 2);
+    ctx.fillStyle = '#6ee7b7';
+    ctx.shadowBlur = 14; ctx.shadowColor = '#22d3ee';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // head with analytical AI-style visor (single scan line eye)
+    skinFace(ctx, cx, cy - s * 0.13, s * 0.16, s * 0.2, '#caa37a', '#7a5634');
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(cx - s * 0.09, cy - s * 0.165, s * 0.18, s * 0.035, 5) : ctx.rect(cx - s * 0.09, cy - s * 0.165, s * 0.18, s * 0.035);
+    ctx.fillStyle = '#022c22';
+    ctx.fill();
+    neonGlowStroke(ctx, () => {
+      ctx.beginPath();
+      ctx.moveTo(cx - s * 0.08, cy - s * 0.148);
+      ctx.lineTo(cx + s * 0.08, cy - s * 0.148);
+      ctx.stroke();
+    }, '#22d3ee', 10, 2);
+
+    rarityFrame(ctx, s, '#10b981', 'rare');
+  },
+
+  // ---- Investigator: cyber agent, digital magnifying scanner, long coat, purple-blue ----
+  investigator(ctx, s) {
+    bgFrame(ctx, s, '#3b0764', '#06030a');
+    particleField(ctx, s, 16, '#a78bfa', i => i);
+    const cx = s * 0.48, cy = s * 0.58;
+
+    // long tactical coat (wide silhouette, dynamic)
+    const coatGrad = ctx.createLinearGradient(cx - s * 0.24, cy, cx + s * 0.24, cy + s * 0.36);
+    coatGrad.addColorStop(0, '#4c1d95');
+    coatGrad.addColorStop(0.6, '#1e1b4b');
+    coatGrad.addColorStop(1, '#0a0a1a');
+    ctx.beginPath();
+    ctx.moveTo(cx - s * 0.15, cy - s * 0.02);
+    ctx.lineTo(cx - s * 0.27, cy + s * 0.36);
+    ctx.lineTo(cx - s * 0.06, cy + s * 0.3);
+    ctx.lineTo(cx, cy + s * 0.36);
+    ctx.lineTo(cx + s * 0.06, cy + s * 0.3);
+    ctx.lineTo(cx + s * 0.27, cy + s * 0.36);
+    ctx.lineTo(cx + s * 0.15, cy - s * 0.02);
+    ctx.quadraticCurveTo(cx, cy - s * 0.05, cx - s * 0.15, cy - s * 0.02);
+    ctx.fillStyle = coatGrad;
+    ctx.fill();
+    neonGlowStroke(ctx, () => {
+      ctx.beginPath();
+      ctx.moveTo(cx - s * 0.15, cy - s * 0.01); ctx.lineTo(cx - s * 0.26, cy + s * 0.35);
+      ctx.moveTo(cx + s * 0.15, cy - s * 0.01); ctx.lineTo(cx + s * 0.26, cy + s * 0.35);
+      ctx.stroke();
+    }, '#a78bfa', 6, 1.2);
+
+    // digital magnifying scanner (held forward, glowing lens)
+    ctx.save();
+    ctx.translate(cx + s * 0.26, cy + s * 0.06);
+    ctx.rotate(0.3);
+    ctx.beginPath();
+    ctx.arc(0, 0, s * 0.07, 0, Math.PI * 2);
+    ctx.strokeStyle = '#c4b5fd';
+    ctx.lineWidth = 4;
+    ctx.shadowBlur = 16; ctx.shadowColor = '#818cf8';
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    const lensGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, s * 0.06);
+    lensGrad.addColorStop(0, hexA('#ede9fe', 0.7));
+    lensGrad.addColorStop(1, hexA('#6366f1', 0.15));
+    ctx.beginPath();
+    ctx.arc(0, 0, s * 0.06, 0, Math.PI * 2);
+    ctx.fillStyle = lensGrad;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(s * 0.05, s * 0.05);
+    ctx.lineTo(s * 0.13, s * 0.13);
+    ctx.strokeStyle = '#a78bfa';
+    ctx.lineWidth = 5;
+    ctx.lineCap = 'round';
+    ctx.shadowBlur = 10; ctx.shadowColor = '#818cf8';
+    ctx.stroke();
+    ctx.restore();
+
+    // head, sharp focused gaze
+    skinFace(ctx, cx, cy - s * 0.14, s * 0.16, s * 0.2, '#b88a5e', '#684623');
+    visorEyes(ctx, cx, cy - s * 0.15, s * 0.09, '#a78bfa');
+    // collar up
+    ctx.beginPath();
+    ctx.moveTo(cx - s * 0.12, cy - s * 0.02);
+    ctx.lineTo(cx - s * 0.05, cy - s * 0.18);
+    ctx.lineTo(cx, cy - s * 0.1);
+    ctx.lineTo(cx + s * 0.05, cy - s * 0.18);
+    ctx.lineTo(cx + s * 0.12, cy - s * 0.02);
+    ctx.closePath();
+    ctx.fillStyle = pDarken('#4c1d95', 15);
+    ctx.fill();
+
+    rarityFrame(ctx, s, '#8b5cf6', 'epic');
+  },
+
+  // ---- Philosopher: wise futuristic sage, floating books/symbols, golden cosmic aura, legendary ----
+  philosopher(ctx, s) {
+    bgFrame(ctx, s, '#451a03', '#0a0600');
+    // cosmic aura ring
+    const cx = s * 0.5, cy = s * 0.56;
+    const auraGrad = ctx.createRadialGradient(cx, cy, s * 0.1, cx, cy, s * 0.42);
+    auraGrad.addColorStop(0, hexA('#fde68a', 0.45));
+    auraGrad.addColorStop(0.6, hexA('#f59e0b', 0.15));
+    auraGrad.addColorStop(1, hexA('#f59e0b', 0));
+    ctx.beginPath();
+    ctx.arc(cx, cy, s * 0.42, 0, Math.PI * 2);
+    ctx.fillStyle = auraGrad;
+    ctx.fill();
+    particleField(ctx, s, 22, '#fbbf24', i => i);
+
+    // orbiting golden rings (legendary signature)
+    [0, 1, 2].forEach(i => {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(i * 1.1 + 0.3);
+      ctx.scale(1, 0.32);
+      ctx.beginPath();
+      ctx.arc(0, 0, s * (0.3 + i * 0.05), 0, Math.PI * 2);
+      ctx.strokeStyle = hexA('#fcd34d', 0.5 - i * 0.1);
+      ctx.lineWidth = 1.5;
+      ctx.shadowBlur = 10; ctx.shadowColor = '#fbbf24';
+      ctx.stroke();
+      ctx.restore();
+    });
+
+    // floating books and symbols
+    [[-0.3, -0.12, -0.2], [0.3, -0.06, 0.25]].forEach(([ox, oy, rot]) => {
+      ctx.save();
+      ctx.translate(cx + s * ox, cy + s * oy);
+      ctx.rotate(rot);
+      const bookGrad = ctx.createLinearGradient(-s * 0.05, 0, s * 0.05, 0);
+      bookGrad.addColorStop(0, '#b45309');
+      bookGrad.addColorStop(1, '#fbbf24');
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(-s * 0.05, -s * 0.04, s * 0.1, s * 0.08, 2) : ctx.rect(-s * 0.05, -s * 0.04, s * 0.1, s * 0.08);
+      ctx.fillStyle = bookGrad;
+      ctx.shadowBlur = 10; ctx.shadowColor = '#fbbf24';
+      ctx.fill();
+      ctx.strokeStyle = '#fde68a'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(0, -s * 0.04); ctx.lineTo(0, s * 0.04); ctx.stroke();
+      ctx.restore();
+    });
+    // floating symbol (eye of truth)
+    ctx.save();
+    ctx.translate(cx, cy - s * 0.32);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, s * 0.05, s * 0.026, 0, 0, Math.PI * 2);
+    ctx.strokeStyle = '#fde68a'; ctx.lineWidth = 2;
+    ctx.shadowBlur = 12; ctx.shadowColor = '#fbbf24';
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, 0, s * 0.015, 0, Math.PI * 2);
+    ctx.fillStyle = '#fef3c7';
+    ctx.fill();
+    ctx.restore();
+    ctx.shadowBlur = 0;
+
+    // robe body
+    const robeGrad = ctx.createLinearGradient(cx - s * 0.22, cy, cx + s * 0.22, cy + s * 0.36);
+    robeGrad.addColorStop(0, '#92400e');
+    robeGrad.addColorStop(0.5, '#451a03');
+    robeGrad.addColorStop(1, '#1c0a00');
+    ctx.beginPath();
+    ctx.moveTo(cx - s * 0.17, cy - s * 0.02);
+    ctx.lineTo(cx - s * 0.26, cy + s * 0.36);
+    ctx.lineTo(cx + s * 0.26, cy + s * 0.36);
+    ctx.lineTo(cx + s * 0.17, cy - s * 0.02);
+    ctx.quadraticCurveTo(cx, cy - s * 0.06, cx - s * 0.17, cy - s * 0.02);
+    ctx.fillStyle = robeGrad;
+    ctx.fill();
+    neonGlowStroke(ctx, () => {
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - s * 0.02); ctx.lineTo(cx, cy + s * 0.34);
+      ctx.stroke();
+    }, '#fbbf24', 8, 1.5);
+
+    // head — wise, bearded sage with glowing eyes
+    skinFace(ctx, cx, cy - s * 0.15, s * 0.17, s * 0.21, '#caa07a', '#7d5a36');
+    // beard
+    ctx.beginPath();
+    ctx.moveTo(cx - s * 0.1, cy - s * 0.1);
+    ctx.quadraticCurveTo(cx, cy + s * 0.02, cx + s * 0.1, cy - s * 0.1);
+    ctx.quadraticCurveTo(cx + s * 0.08, cy - s * 0.04, cx, cy - s * 0.03);
+    ctx.quadraticCurveTo(cx - s * 0.08, cy - s * 0.04, cx - s * 0.1, cy - s * 0.1);
+    ctx.fillStyle = '#e2e8f0';
+    ctx.fill();
+    // glowing golden eyes
+    ctx.beginPath();
+    ctx.arc(cx - s * 0.04, cy - s * 0.17, s * 0.013, 0, Math.PI * 2);
+    ctx.arc(cx + s * 0.04, cy - s * 0.17, s * 0.013, 0, Math.PI * 2);
+    ctx.fillStyle = '#fde68a';
+    ctx.shadowBlur = 14; ctx.shadowColor = '#fbbf24';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    // headpiece circlet
+    neonGlowStroke(ctx, () => {
+      ctx.beginPath();
+      ctx.arc(cx, cy - s * 0.2, s * 0.09, Math.PI * 1.1, Math.PI * 1.9);
+      ctx.stroke();
+    }, '#fcd34d', 8, 2);
+
+    rarityFrame(ctx, s, '#fbbf24', 'legendary');
+  },
+
+  // ---- Propagandist: dark media commander, holographic broadcast screens, orange-red ----
+  propagandist(ctx, s) {
+    bgFrame(ctx, s, '#7c2d12', '#0a0303');
+    particleField(ctx, s, 16, '#fb923c', i => i);
+    const cx = s * 0.5, cy = s * 0.58;
+
+    // broadcast screens fanned behind
+    [-0.3, 0, 0.3].forEach((rot, i) => {
+      ctx.save();
+      ctx.translate(cx, cy - s * 0.1);
+      ctx.rotate(rot);
+      ctx.translate(0, -s * 0.22);
+      const scrGrad = ctx.createLinearGradient(-s * 0.08, 0, s * 0.08, 0);
+      scrGrad.addColorStop(0, hexA('#fb923c', 0.5));
+      scrGrad.addColorStop(1, hexA('#dc2626', 0.25));
+      ctx.beginPath();
+      ctx.roundRect ? ctx.roundRect(-s * 0.08, -s * 0.06, s * 0.16, s * 0.11, 3) : ctx.rect(-s * 0.08, -s * 0.06, s * 0.16, s * 0.11);
+      ctx.fillStyle = scrGrad;
+      ctx.strokeStyle = hexA('#fed7aa', 0.7);
+      ctx.shadowBlur = 12; ctx.shadowColor = '#f97316';
+      ctx.fill(); ctx.stroke();
+      ctx.shadowBlur = 0;
+      // static lines
+      ctx.strokeStyle = hexA('#fff7ed', 0.4); ctx.lineWidth = 0.8;
+      for (let j = 0; j < 5; j++) {
+        ctx.beginPath();
+        ctx.moveTo(-s * 0.06, -s * 0.04 + j * s * 0.02);
+        ctx.lineTo(s * 0.06, -s * 0.04 + j * s * 0.02);
+        ctx.stroke();
+      }
+      ctx.restore();
+    });
+
+    // corrupted energy aura around body
+    const corrGrad = ctx.createRadialGradient(cx, cy + s * 0.1, s * 0.05, cx, cy + s * 0.1, s * 0.3);
+    corrGrad.addColorStop(0, hexA('#f97316', 0.25));
+    corrGrad.addColorStop(1, hexA('#dc2626', 0));
+    ctx.beginPath();
+    ctx.arc(cx, cy + s * 0.1, s * 0.3, 0, Math.PI * 2);
+    ctx.fillStyle = corrGrad;
+    ctx.fill();
+
+    // commander coat
+    const coatGrad = ctx.createLinearGradient(cx - s * 0.2, cy, cx + s * 0.2, cy + s * 0.32);
+    coatGrad.addColorStop(0, '#9a3412');
+    coatGrad.addColorStop(1, '#1c0500');
+    ctx.beginPath();
+    ctx.moveTo(cx - s * 0.16, cy);
+    ctx.lineTo(cx - s * 0.22, cy + s * 0.34);
+    ctx.lineTo(cx + s * 0.22, cy + s * 0.34);
+    ctx.lineTo(cx + s * 0.16, cy);
+    ctx.quadraticCurveTo(cx, cy - s * 0.03, cx - s * 0.16, cy);
+    ctx.fillStyle = coatGrad;
+    ctx.fill();
+    // medals/insignia (corrupted, glitchy)
+    neonGlowStroke(ctx, () => {
+      ctx.beginPath();
+      ctx.moveTo(cx - s * 0.08, cy + s * 0.06); ctx.lineTo(cx - s * 0.06, cy + s * 0.14);
+      ctx.moveTo(cx + s * 0.02, cy + s * 0.05); ctx.lineTo(cx + s * 0.04, cy + s * 0.16);
+      ctx.stroke();
+    }, '#fb923c', 6, 1.5);
+
+    // head with megaphone-like mouth glow (broadcast mask)
+    skinFace(ctx, cx, cy - s * 0.13, s * 0.16, s * 0.2, '#b87a4a', '#5c3010');
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(cx - s * 0.08, cy - s * 0.08, s * 0.16, s * 0.04, 4) : ctx.rect(cx - s * 0.08, cy - s * 0.08, s * 0.16, s * 0.04);
+    ctx.fillStyle = '#dc2626';
+    ctx.shadowBlur = 12; ctx.shadowColor = '#f97316';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    visorEyes(ctx, cx, cy - s * 0.16, s * 0.08, '#fb923c');
+
+    rarityFrame(ctx, s, '#f97316', 'common');
+  },
+
+  // ---- Deceiver: master illusionist, glitch effects, shadow clones, purple neon ----
+  deceiver(ctx, s) {
+    bgFrame(ctx, s, '#581c87', '#06020a');
+    particleField(ctx, s, 14, '#c084fc', i => i);
+    const cx = s * 0.5, cy = s * 0.58;
+
+    // shadow clones (offset translucent silhouettes)
+    [[-0.16, 0.04, 0.45], [0.16, -0.02, 0.6]].forEach(([ox, oy, alpha]) => {
+      ctx.save();
+      ctx.globalAlpha = alpha * 0.5;
+      ctx.translate(cx + s * ox, cy + s * oy);
+      ctx.beginPath();
+      ctx.moveTo(-s * 0.13, 0);
+      ctx.lineTo(-s * 0.17, s * 0.3);
+      ctx.lineTo(s * 0.17, s * 0.3);
+      ctx.lineTo(s * 0.13, 0);
+      ctx.quadraticCurveTo(0, -s * 0.03, -s * 0.13, 0);
+      ctx.fillStyle = '#a855f7';
+      ctx.shadowBlur = 14; ctx.shadowColor = '#c084fc';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(0, -s * 0.13, s * 0.08, s * 0.1, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    });
+
+    // main body with glitch slice effect
+    ctx.save();
+    const bodyGrad = ctx.createLinearGradient(cx - s * 0.16, cy, cx + s * 0.16, cy + s * 0.3);
+    bodyGrad.addColorStop(0, '#a855f7');
+    bodyGrad.addColorStop(0.5, '#6b21a8');
+    bodyGrad.addColorStop(1, '#1e0a30');
+    ctx.beginPath();
+    ctx.moveTo(cx - s * 0.15, cy);
+    ctx.lineTo(cx - s * 0.19, cy + s * 0.32);
+    ctx.lineTo(cx + s * 0.19, cy + s * 0.32);
+    ctx.lineTo(cx + s * 0.15, cy);
+    ctx.quadraticCurveTo(cx, cy - s * 0.03, cx - s * 0.15, cy);
+    ctx.fillStyle = bodyGrad;
+    ctx.fill();
+    // glitch slices - offset colored bars
+    ['#f472b6', '#60a5fa'].forEach((col, i) => {
+      ctx.save();
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = col;
+      ctx.fillRect(cx - s * 0.18 + (i === 0 ? -3 : 3), cy + s * 0.1 + i * s * 0.06, s * 0.36, s * 0.018);
+      ctx.restore();
+    });
+    ctx.restore();
+
+    // head - masked illusionist with split-color glow eyes
+    skinFace(ctx, cx, cy - s * 0.14, s * 0.16, s * 0.2, '#c9a3d6', '#6b21a8');
+    ctx.beginPath();
+    ctx.moveTo(cx - s * 0.1, cy - s * 0.18);
+    ctx.quadraticCurveTo(cx, cy - s * 0.26, cx + s * 0.1, cy - s * 0.18);
+    ctx.lineTo(cx + s * 0.09, cy - s * 0.06);
+    ctx.quadraticCurveTo(cx, cy - s * 0.1, cx - s * 0.09, cy - s * 0.06);
+    ctx.closePath();
+    ctx.fillStyle = '#3b0764';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx - s * 0.04, cy - s * 0.15, s * 0.014, 0, Math.PI * 2);
+    ctx.fillStyle = '#f0abfc';
+    ctx.shadowBlur = 12; ctx.shadowColor = '#f0abfc';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cx + s * 0.04, cy - s * 0.15, s * 0.014, 0, Math.PI * 2);
+    ctx.fillStyle = '#7dd3fc';
+    ctx.shadowBlur = 12; ctx.shadowColor = '#7dd3fc';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    rarityFrame(ctx, s, '#a855f7', 'rare');
+  },
+
+  // ---- Manipulator: strategic mastermind, psychic powers, cyber brain network, dark pink ----
+  manipulator(ctx, s) {
+    bgFrame(ctx, s, '#831843', '#08020a');
+    particleField(ctx, s, 18, '#f472b6', i => i);
+    const cx = s * 0.5, cy = s * 0.6;
+
+    // floating cyber brain network (above head)
+    ctx.save();
+    ctx.translate(cx, cy - s * 0.34);
+    const brainGrad = ctx.createRadialGradient(-2, -2, 1, 0, 0, s * 0.09);
+    brainGrad.addColorStop(0, '#fbcfe8');
+    brainGrad.addColorStop(1, '#831843');
+    ctx.beginPath();
+    ctx.arc(0, 0, s * 0.08, 0, Math.PI * 2);
+    ctx.fillStyle = brainGrad;
+    ctx.shadowBlur = 18; ctx.shadowColor = '#ec4899';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    // synapse network lines radiating
+    for (let i = 0; i < 8; i++) {
+      const ang = (i / 8) * Math.PI * 2;
+      const r = s * 0.13;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(ang) * r, Math.sin(ang) * r);
+      ctx.strokeStyle = hexA('#f472b6', 0.4);
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(Math.cos(ang) * r, Math.sin(ang) * r, 1.6, 0, Math.PI * 2);
+      ctx.fillStyle = '#f9a8d4';
+      ctx.shadowBlur = 6; ctx.shadowColor = '#ec4899';
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+    ctx.restore();
+
+    // psychic energy hands raised
+    [-1, 1].forEach(side => {
+      ctx.save();
+      ctx.translate(cx + side * s * 0.22, cy + s * 0.05);
+      const pGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, s * 0.05);
+      pGrad.addColorStop(0, hexA('#fbcfe8', 0.8));
+      pGrad.addColorStop(1, hexA('#ec4899', 0));
+      ctx.beginPath();
+      ctx.arc(0, 0, s * 0.05, 0, Math.PI * 2);
+      ctx.fillStyle = pGrad;
+      ctx.fill();
+      ctx.restore();
+    });
+
+    // torso - strategic uniform
+    const torsoGrad = ctx.createLinearGradient(cx - s * 0.18, cy, cx + s * 0.18, cy + s * 0.3);
+    torsoGrad.addColorStop(0, '#be185d');
+    torsoGrad.addColorStop(1, '#1c0512');
+    ctx.beginPath();
+    ctx.moveTo(cx - s * 0.16, cy);
+    ctx.lineTo(cx - s * 0.2, cy + s * 0.32);
+    ctx.lineTo(cx + s * 0.2, cy + s * 0.32);
+    ctx.lineTo(cx + s * 0.16, cy);
+    ctx.quadraticCurveTo(cx, cy - s * 0.03, cx - s * 0.16, cy);
+    ctx.fillStyle = torsoGrad;
+    ctx.fill();
+    neonGlowStroke(ctx, () => {
+      ctx.beginPath();
+      ctx.moveTo(cx, cy + s * 0.02); ctx.lineTo(cx, cy + s * 0.28);
+      ctx.stroke();
+    }, '#f472b6', 6, 1.5);
+
+    // head - calm, calculating expression
+    skinFace(ctx, cx, cy - s * 0.13, s * 0.16, s * 0.2, '#b894a0', '#5c2a3a');
+    visorEyes(ctx, cx, cy - s * 0.15, s * 0.08, '#f472b6');
+    // psychic temple nodes
+    ctx.beginPath();
+    ctx.arc(cx - s * 0.09, cy - s * 0.14, s * 0.012, 0, Math.PI * 2);
+    ctx.arc(cx + s * 0.09, cy - s * 0.14, s * 0.012, 0, Math.PI * 2);
+    ctx.fillStyle = '#fbcfe8';
+    ctx.shadowBlur = 10; ctx.shadowColor = '#ec4899';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    rarityFrame(ctx, s, '#ec4899', 'epic');
+  },
+
+  // ---- Distraction: chaotic trickster, circus-cyber outfit, explosive effects ----
+  distraction(ctx, s) {
+    bgFrame(ctx, s, '#7f1d1d', '#0a0303');
+    particleField(ctx, s, 20, '#facc15', i => i);
+    const cx = s * 0.5, cy = s * 0.56;
+
+    // explosive burst behind
+    ctx.save();
+    ctx.translate(cx, cy);
+    for (let i = 0; i < 10; i++) {
+      const ang = (i / 10) * Math.PI * 2;
+      const len = s * (0.22 + (i % 3) * 0.04);
+      const grad = ctx.createLinearGradient(0, 0, Math.cos(ang) * len, Math.sin(ang) * len);
+      grad.addColorStop(0, hexA('#ef4444', 0.7));
+      grad.addColorStop(1, hexA('#facc15', 0));
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(ang) * len, Math.sin(ang) * len);
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // circus-cyber outfit - diamond harlequin pattern jacket
+    const jGrad = ctx.createLinearGradient(cx - s * 0.18, cy, cx + s * 0.18, cy + s * 0.3);
+    jGrad.addColorStop(0, '#dc2626');
+    jGrad.addColorStop(1, '#3f0a0a');
+    ctx.beginPath();
+    ctx.moveTo(cx - s * 0.16, cy);
+    ctx.lineTo(cx - s * 0.2, cy + s * 0.32);
+    ctx.lineTo(cx + s * 0.2, cy + s * 0.32);
+    ctx.lineTo(cx + s * 0.16, cy);
+    ctx.quadraticCurveTo(cx, cy - s * 0.03, cx - s * 0.16, cy);
+    ctx.fillStyle = jGrad;
+    ctx.fill();
+    // harlequin diamonds
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(cx - s * 0.16, cy);
+    ctx.lineTo(cx - s * 0.2, cy + s * 0.32);
+    ctx.lineTo(cx + s * 0.2, cy + s * 0.32);
+    ctx.lineTo(cx + s * 0.16, cy);
+    ctx.closePath();
+    ctx.clip();
+    ctx.fillStyle = hexA('#facc15', 0.6);
+    for (let r = 0; r < 4; r++) for (let c = -2; c <= 2; c++) {
+      if ((r + c) % 2 === 0) continue;
+      const px = cx + c * s * 0.08, py = cy + r * s * 0.09;
+      ctx.beginPath();
+      ctx.moveTo(px, py - s * 0.04);
+      ctx.lineTo(px + s * 0.04, py);
+      ctx.lineTo(px, py + s * 0.04);
+      ctx.lineTo(px - s * 0.04, py);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // head with jester-like cyber visor and wild grin
+    skinFace(ctx, cx, cy - s * 0.14, s * 0.16, s * 0.2, '#d4a373', '#7a4a25');
+    ctx.beginPath();
+    ctx.moveTo(cx - s * 0.07, cy - s * 0.06);
+    ctx.quadraticCurveTo(cx, cy - s * 0.01, cx + s * 0.07, cy - s * 0.06);
+    ctx.strokeStyle = '#1c1917';
+    ctx.lineWidth = 2.5;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    visorEyes(ctx, cx, cy - s * 0.17, s * 0.08, '#facc15');
+    // jester cap points
+    [-1, 0, 1].forEach(d => {
+      ctx.beginPath();
+      ctx.moveTo(cx + d * s * 0.07, cy - s * 0.2);
+      ctx.lineTo(cx + d * s * 0.07 + (d * s * 0.015), cy - s * 0.3);
+      ctx.lineTo(cx + d * s * 0.07 + s * 0.02, cy - s * 0.2);
+      ctx.closePath();
+      ctx.fillStyle = d === 0 ? '#facc15' : '#dc2626';
+      ctx.shadowBlur = 8; ctx.shadowColor = '#facc15';
+      ctx.fill();
+    });
+    ctx.shadowBlur = 0;
+
+    rarityFrame(ctx, s, '#ef4444', 'common');
+  },
+};
+
+// ---- generic fallback painter for cards without a bespoke illustration ----
+function paintGenericPortrait(ctx, s, card) {
+  bgFrame(ctx, s, pDarken(card.color, 40), '#08080c');
+  particleField(ctx, s, 12, card.color, i => i);
+  const cx = s * 0.5, cy = s * 0.58;
+  const bodyGrad = ctx.createLinearGradient(cx - s * 0.18, cy, cx + s * 0.18, cy + s * 0.3);
+  bodyGrad.addColorStop(0, pLighten(card.color, 10));
+  bodyGrad.addColorStop(1, pDarken(card.color, 45));
+  ctx.beginPath();
+  ctx.moveTo(cx - s * 0.16, cy);
+  ctx.lineTo(cx - s * 0.2, cy + s * 0.32);
+  ctx.lineTo(cx + s * 0.2, cy + s * 0.32);
+  ctx.lineTo(cx + s * 0.16, cy);
+  ctx.quadraticCurveTo(cx, cy - s * 0.03, cx - s * 0.16, cy);
+  ctx.fillStyle = bodyGrad;
+  ctx.fill();
+  // sphere head
+  const headGrad = ctx.createRadialGradient(cx - 6, cy - s * 0.14 - 6, 2, cx, cy - s * 0.14, s * 0.13);
+  headGrad.addColorStop(0, pLighten(card.color, 50));
+  headGrad.addColorStop(1, pDarken(card.color, 30));
+  ctx.beginPath();
+  ctx.arc(cx, cy - s * 0.14, s * 0.13, 0, Math.PI * 2);
+  ctx.fillStyle = headGrad;
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = `bold ${Math.floor(s * 0.13)}px Arial`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowBlur = 6; ctx.shadowColor = 'rgba(0,0,0,0.7)';
+  ctx.fillText(card.icon, cx, cy - s * 0.14);
+  ctx.shadowBlur = 0;
+  const rarity = card.cost >= 6 ? 'legendary' : card.cost >= 4 ? 'epic' : card.cost >= 3 ? 'rare' : 'common';
+  rarityFrame(ctx, s, card.color, rarity);
+}
+
+function getPortraitCanvas(card) {
+  if (PORTRAIT_CACHE[card.id]) return PORTRAIT_CACHE[card.id];
+  const off = document.createElement('canvas');
+  off.width = PORTRAIT_SIZE;
+  off.height = PORTRAIT_SIZE;
+  const octx = off.getContext('2d');
+  const painter = PORTRAIT_PAINTERS[card.id];
+  if (painter) painter(octx, PORTRAIT_SIZE);
+  else paintGenericPortrait(octx, PORTRAIT_SIZE, card);
+  PORTRAIT_CACHE[card.id] = off;
+  return off;
+}
+
+function getPortraitDataURL(card) {
+  return getPortraitCanvas(card).toDataURL('image/png');
+}
+
+class Game{
+constructor(){
+this.canvas=document.getElementById('gameCanvas');
+this.ctx=this.canvas.getContext('2d');
+this.resize();
+this.state='menu';
+this.selectedDeck=[];
+this.playerDeck=[];
+this.enemyDeck=[];
+this.battle=null;
+this.lastTime=0;
+this.setupEventListeners();
+this.renderLoop();
+}
+resize(){
+const container=document.getElementById('game-container');
+this.canvas.width=CONFIG.CANVAS_WIDTH;
+this.canvas.height=CONFIG.CANVAS_HEIGHT;
+this.canvas.style.width=container.clientWidth+'px';
+this.canvas.style.height=container.clientHeight+'px';
+this.scaleX=container.clientWidth/CONFIG.CANVAS_WIDTH;
+this.scaleY=container.clientHeight/CONFIG.CANVAS_HEIGHT;
+}
+setupEventListeners(){
+window.addEventListener('resize',()=>this.resize());
+this.canvas.addEventListener('click',(e)=>this.handleClick(e));
+this.canvas.addEventListener('touchstart',(e)=>{
+e.preventDefault();
+const touch=e.touches[0];
+this.handleClick({clientX:touch.clientX,clientY:touch.clientY});
+},{passive:false});
+this.canvas.addEventListener('touchmove',(e)=>e.preventDefault(),{passive:false});
+}
+handleClick(e){
+if(this.state!=='battle'||!this.battle)return;
+const rect=this.canvas.getBoundingClientRect();
+const x=(e.clientX-rect.left)/this.scaleX;
+const y=(e.clientY-rect.top)/this.scaleY;
+this.battle.handleDeployClick(x,y);
+}
+showStartScreen(){
+this.state='menu';
+this.hideAllScreens();
+document.getElementById('start-screen').classList.remove('hidden');
+document.getElementById('ui-overlay').style.display='none';
+}
+showDeckBuilder(){
+this.state='deck';
+this.hideAllScreens();
+document.getElementById('deck-screen').classList.remove('hidden');
+this.renderDeckBuilder();
+}
+showCardList(){
+this.state='cards';
+this.hideAllScreens();
+document.getElementById('cards-screen').classList.remove('hidden');
+this.renderAllCards();
+}
+hideAllScreens(){
+document.querySelectorAll('.screen-overlay').forEach(s=>s.classList.add('hidden'));
+}
+renderDeckBuilder(){
+const container=document.getElementById('deck-builder');
+container.innerHTML='';
+ALL_CARDS.forEach(card=>{
+const div=document.createElement('div');
+div.className='deck-card-option'+(this.selectedDeck.includes(card.id)?' selected':'');
+div.innerHTML=`<img class="opt-portrait" src="${getPortraitDataURL(card)}" alt="${card.name}"><div class="opt-cost">${card.cost}</div><div class="opt-name">${card.name}</div>`;
+div.onclick=()=>this.toggleCardSelection(card.id);
+container.appendChild(div);
+});
+document.getElementById('deck-count').textContent=`Selected: ${this.selectedDeck.length} / 8`;
+document.getElementById('start-battle-btn').disabled=this.selectedDeck.length!==8;
+}
+renderAllCards(){
+const container=document.getElementById('all-cards-list');
+container.innerHTML='';
+ALL_CARDS.forEach(card=>{
+const div=document.createElement('div');
+div.className='deck-card-option';
+div.style.width='104px';
+div.style.height='156px';
+div.style.justifyContent='flex-start';
+div.style.paddingTop='4px';
+div.innerHTML=`<img class="opt-portrait-static" src="${getPortraitDataURL(card)}" alt="${card.name}"><div class="opt-cost" style="position:static;margin:2px auto 0;">${card.cost}⚡</div><div class="opt-name" style="font-size:9px;background:none;position:static;">${card.name}</div><div style="font-size:8px;color:#666;">${card.type}</div><div style="font-size:7px;color:#888;padding:0 4px;">${card.desc.substring(0,40)}...</div>`;
+container.appendChild(div);
+});
+}
+toggleCardSelection(cardId){
+if(this.selectedDeck.includes(cardId)){
+this.selectedDeck=this.selectedDeck.filter(id=>id!==cardId);
+}else if(this.selectedDeck.length<8){
+this.selectedDeck.push(cardId);
+}
+this.renderDeckBuilder();
+}
+startBattle(){
+if(this.selectedDeck.length!==8)return;
+this.state='battle';
+this.hideAllScreens();
+document.getElementById('ui-overlay').style.display='flex';
+this.playerDeck=this.selectedDeck.map(id=>ALL_CARDS.find(c=>c.id===id));
+const shuffled=[...ALL_CARDS].sort(()=>Math.random()-0.5);
+this.enemyDeck=shuffled.slice(0,8);
+this.battle=new Battle(this.playerDeck,this.enemyDeck,this);
+this.battle.start();
+}
+showResult(winner,playerCrowns,enemyCrowns){
+this.state='result';
+this.hideAllScreens();
+document.getElementById('ui-overlay').style.display='none';
+const title=document.getElementById('result-title');
+const crowns=document.getElementById('result-crowns');
+const desc=document.getElementById('result-desc');
+if(winner==='player'){
+title.textContent='VICTORY!';
+title.className='result-title result-win';
+desc.textContent='Truth has prevailed over deception!';
+}else if(winner==='enemy'){
+title.textContent='DEFEAT!';
+title.className='result-title result-lose';
+desc.textContent='Deception has clouded the truth...';
+}else{
+title.textContent='DRAW!';
+title.className='result-title result-draw';
+desc.textContent='Truth and Deception remain in balance.';
+}
+crowns.textContent=`👑 ${playerCrowns} - ${enemyCrowns}`;
+document.getElementById('result-screen').classList.remove('hidden');
+}
+renderLoop(){
+const now=performance.now();
+const dt=(now-this.lastTime)/1000;
+this.lastTime=now;
+if(this.state==='battle'&&this.battle){
+this.battle.update(dt);
+this.battle.render(this.ctx);
+}else{
+this.renderMenuBackground();
+}
+requestAnimationFrame(()=>this.renderLoop());
+}
+renderMenuBackground(){
+const ctx=this.ctx;
+const w=this.canvas.width;
+const h=this.canvas.height;
+const time=performance.now()/1000;
+const bgGrad=ctx.createRadialGradient(w/2,h*0.35,0,w/2,h*0.35,h*0.8);
+bgGrad.addColorStop(0,'#1e1040');
+bgGrad.addColorStop(1,'#070710');
+ctx.fillStyle=bgGrad;
+ctx.fillRect(0,0,w,h);
+// perspective floor for 3D feel behind menu
+const horizonY=h*0.55;
+ctx.strokeStyle='rgba(192,38,211,0.12)';
+ctx.lineWidth=1;
+const vanishX=w/2;
+for(let i=-7;i<=7;i++){
+const topX=vanishX+i*16;
+const botX=vanishX+i*140;
+ctx.beginPath();
+ctx.moveTo(topX,horizonY);
+ctx.lineTo(botX,h);
+ctx.stroke();
+}
+for(let row=0;row<7;row++){
+const rowY=horizonY+Math.pow(row/7,1.7)*(h-horizonY);
+ctx.strokeStyle=`rgba(192,38,211,${0.18-row*0.02})`;
+ctx.beginPath();
+ctx.moveTo(0,rowY);
+ctx.lineTo(w,rowY);
+ctx.stroke();
+}
+// floating 3D-shaded orbs (echoing the character sphere style)
+for(let i=0;i<14;i++){
+const px=(Math.sin(time*0.4+i*1.7)*0.5+0.5)*w;
+const py=(Math.cos(time*0.3+i*2.3)*0.5+0.5)*horizonY;
+const size=4+Math.sin(time+i)*2+4;
+const color=i%2===0?'#3b82f6':'#c026d3';
+const grad=ctx.createRadialGradient(px-size*0.3,py-size*0.3,0,px,py,size*1.2);
+grad.addColorStop(0,'#ffffff');
+grad.addColorStop(0.4,color);
+grad.addColorStop(1,color+'00');
+ctx.beginPath();
+ctx.arc(px,py,size,0,Math.PI*2);
+ctx.fillStyle=grad;
+ctx.fill();
+}
+}
+}
+
+class Battle{
+constructor(playerDeck,enemyDeck,game){
+this.playerDeck=playerDeck;
+this.enemyDeck=enemyDeck;
+this.game=game;
+this.playerElixir=5;
+this.enemyElixir=5;
+this.time=CONFIG.BATTLE_TIME;
+this.overtime=false;
+this.finished=false;
+this.playerHand=[];
+this.enemyHand=[];
+this.playerDeckQueue=[...playerDeck];
+this.enemyDeckQueue=[...enemyDeck];
+this.units=[];
+this.projectiles=[];
+this.effects=[];
+this.playerTowers={
+king:{x:250,y:780,hp:CONFIG.TOWER_KING_HP,maxHp:CONFIG.TOWER_KING_HP,type:'king',side:'player'},
+left:{x:100,y:700,hp:CONFIG.TOWER_PRINCESS_HP,maxHp:CONFIG.TOWER_PRINCESS_HP,type:'princess',side:'player'},
+right:{x:400,y:700,hp:CONFIG.TOWER_PRINCESS_HP,maxHp:CONFIG.TOWER_PRINCESS_HP,type:'princess',side:'player'}
+};
+this.enemyTowers={
+king:{x:250,y:120,hp:CONFIG.TOWER_KING_HP,maxHp:CONFIG.TOWER_KING_HP,type:'king',side:'enemy'},
+left:{x:100,y:200,hp:CONFIG.TOWER_PRINCESS_HP,maxHp:CONFIG.TOWER_PRINCESS_HP,type:'princess',side:'enemy'},
+right:{x:400,y:200,hp:CONFIG.TOWER_PRINCESS_HP,maxHp:CONFIG.TOWER_PRINCESS_HP,type:'princess',side:'enemy'}
+};
+this.selectedCard=null;
+this.playerCrowns=0;
+this.enemyCrowns=0;
+this.aiTimer=0;
+this.aiDecisionInterval=2.5;
+this.deployHintShown=false;
+this.drawInitialHands();
+}
+drawInitialHands(){
+for(let i=0;i<4;i++){
+if(this.playerDeckQueue.length>0)this.playerHand.push(this.playerDeckQueue.shift());
+if(this.enemyDeckQueue.length>0)this.enemyHand.push(this.enemyDeckQueue.shift());
+}
+}
+start(){
+this.updateUI();
+this.renderDeckUI();
+}
+update(dt){
+if(this.finished)return;
+this.time-=dt;
+if(this.time<=0){
+if(!this.overtime){
+if(this.playerCrowns!==this.enemyCrowns){this.endBattle();return;}
+this.overtime=true;
+this.time=CONFIG.OVERTIME_TIME;
+}else{this.endBattle();return;}
+}
+const regen=this.overtime?CONFIG.ELIXIR_REGEN*2:CONFIG.ELIXIR_REGEN;
+this.playerElixir=Math.min(CONFIG.ELIXIR_MAX,this.playerElixir+regen*dt);
+this.enemyElixir=Math.min(CONFIG.ELIXIR_MAX,this.enemyElixir+regen*dt);
+this.aiTimer+=dt;
+if(this.aiTimer>=this.aiDecisionInterval){
+this.aiTimer=0;
+this.makeAIDecision();
+}
+this.units.forEach(unit=>this.updateUnit(unit,dt));
+this.units=this.units.filter(u=>u.hp>0);
+this.projectiles.forEach(p=>this.updateProjectile(p,dt));
+this.projectiles=this.projectiles.filter(p=>p.active);
+this.effects.forEach(e=>{e.life-=dt;e.x+=e.vx*dt;e.y+=e.vy*dt;});
+this.effects=this.effects.filter(e=>e.life>0);
+this.updateTowerAttacks(dt);
+this.checkWinCondition();
+this.updateUI();
+if(!this.deployHintShown&&this.playerHand.length>0){
+document.getElementById('deploy-hint').style.display='block';
+this.deployHintShown=true;
+setTimeout(()=>{document.getElementById('deploy-hint').style.display='none';},4000);
+}
+}
+updateUnit(unit,dt){
+if(unit.stunned>0){unit.stunned-=dt;return;}
+if(unit.card.type==='building'){
+unit.lifetime-=dt;
+if(unit.lifetime<=0){unit.hp=0;return;}
+unit.attackCooldown-=dt;
+if(unit.attackCooldown<=0&&unit.card.damage>0){
+const target=this.findTarget(unit,unit.card.range);
+if(target){
+this.createProjectile(unit.x,unit.y,target,unit.card.damage,unit.side,unit.card.color);
+unit.attackCooldown=unit.card.attackSpeed;
+}
+}
+if(unit.card.id==='echo_chamber'){
+unit.spawnTimer-=dt;
+if(unit.spawnTimer<=0){
+this.spawnUnit(ALL_CARDS.find(c=>c.id==='propagandist'),unit.x,unit.y,unit.side);
+unit.spawnTimer=5;
+}
+}
+if(unit.card.id==='beacon_of_truth'){
+unit.healTimer-=dt;
+if(unit.healTimer<=0){
+this.units.forEach(u=>{
+if(u.side===unit.side&&u!==unit&&this.distance(u.x,u.y,unit.x,unit.y)<80){
+u.hp=Math.min(u.maxHp,u.hp+25);
+this.createEffect(u.x,u.y-20,'heal','#22c55e');
+}
+});
+unit.healTimer=1;
+}
+}
+return;
+}
+const target=this.findTarget(unit,unit.card.range);
+if(target){
+unit.attackCooldown-=dt;
+if(unit.attackCooldown<=0){
+let damage=unit.card.damage;
+if(unit.card.id==='whistleblower'&&(target.type==='tower'||target.card?.type==='building'))damage*=3;
+if(unit.card.id==='light_seeker'&&target.card?.id==='deceiver')damage*=1.5;
+if(target.card?.id==='investigator'&&Math.random()<0.5){
+this.createEffect(target.x,target.y,'dodge','#6366f1');
+}else{
+if(unit.card.range>0){
+this.createProjectile(unit.x,unit.y,target,damage,unit.side,unit.card.color);
+}else{
+this.dealDamage(target,damage,unit.side,unit.card.color);
+}
+}
+if(unit.card.id==='fact_checker'){
+unit.stunCounter=(unit.stunCounter||0)+1;
+if(unit.stunCounter>=3){
+target.stunned=0.5;
+unit.stunCounter=0;
+this.createEffect(target.x,target.y,'stun','#fbbf24');
+}
+}
+unit.attackCooldown=unit.card.attackSpeed;
+}
+}else{
+const enemyTower=this.findNearestEnemyTower(unit);
+if(enemyTower){
+const dx=enemyTower.x-unit.x;
+const dy=enemyTower.y-unit.y;
+const dist=Math.sqrt(dx*dx+dy*dy);
+if(dist>5){
+unit.x+=(dx/dist)*unit.card.moveSpeed*40*dt;
+unit.y+=(dy/dist)*unit.card.moveSpeed*40*dt;
+}
+}
+}
+if(unit.card.id==='propagandist'){
+this.units.forEach(u=>{if(u.side===unit.side&&u!==unit&&this.distance(u.x,u.y,unit.x,unit.y)<60)u.buffed=true;});
+}
+}
+findTarget(unit,range){
+let bestTarget=null;
+let bestDist=range+10;
+this.units.forEach(u=>{
+if(u.side!==unit.side&&u.hp>0){
+const dist=this.distance(unit.x,unit.y,u.x,u.y);
+if(dist<bestDist){
+if(u.card.id==='distraction'){bestDist=dist;bestTarget=u;return;}
+if(u.card.id==='decoy'&&dist<80){bestDist=dist;bestTarget=u;return;}
+if(unit.card.id==='selective_perceiver'){
+if(!bestTarget||u.hp<bestTarget.hp){bestTarget=u;bestDist=dist;}
+}else{bestDist=dist;bestTarget=u;}
+}
+}
+});
+if(!bestTarget||range===0){
+const towers=unit.side==='player'?this.enemyTowers:this.playerTowers;
+Object.values(towers).forEach(t=>{
+if(t.hp>0){
+const dist=this.distance(unit.x,unit.y,t.x,t.y);
+if(dist<bestDist){bestDist=dist;bestTarget=t;}
+}
+});
+}
+return bestTarget;
+}
+findNearestEnemyTower(unit){
+const towers=unit.side==='player'?this.enemyTowers:this.playerTowers;
+let nearest=null;
+let bestDist=Infinity;
+Object.values(towers).forEach(t=>{
+if(t.hp>0){
+const dist=this.distance(unit.x,unit.y,t.x,t.y);
+if(dist<bestDist){bestDist=dist;nearest=t;}
+}
+});
+return nearest;
+}
+updateProjectile(p,dt){
+if(!p.target||p.target.hp<=0){p.active=false;return;}
+const dx=p.target.x-p.x;
+const dy=p.target.y-p.y;
+const dist=Math.sqrt(dx*dx+dy*dy);
+const speed=300;
+if(dist<10){
+this.dealDamage(p.target,p.damage,p.side,p.color);
+p.active=false;
+}else{
+p.x+=(dx/dist)*speed*dt;
+p.y+=(dy/dist)*speed*dt;
+}
+}
+updateTowerAttacks(dt){
+const allTowers={...this.playerTowers,...this.enemyTowers};
+Object.values(allTowers).forEach(tower=>{
+if(tower.hp<=0)return;
+tower.attackCooldown=(tower.attackCooldown||0)-dt;
+if(tower.attackCooldown>0)return;
+const damage=tower.type==='king'?CONFIG.TOWER_KING_DAMAGE:CONFIG.TOWER_PRINCESS_DAMAGE;
+const range=CONFIG.TOWER_RANGE;
+let nearest=null;
+let bestDist=range;
+this.units.forEach(u=>{
+if(u.side!==tower.side&&u.hp>0&&u.card.type!=='building'){
+const dist=this.distance(tower.x,tower.y,u.x,u.y);
+if(dist<bestDist){bestDist=dist;nearest=u;}
+}
+});
+if(nearest){
+this.createProjectile(tower.x,tower.y,nearest,damage,tower.side,tower.side==='player'?'#3b82f6':'#ef4444');
+tower.attackCooldown=CONFIG.TOWER_ATTACK_SPEED;
+}
+});
+}
+
+dealDamage(target,damage,attackerSide,color){
+if(target.hp<=0)return;
+if(target.buffed&&target.side===attackerSide)damage*=1.2;
+target.hp-=damage;
+if(target.card?.id==='manipulator'&&attackerSide!==target.side){
+const reflectDamage=damage*0.3;
+this.units.forEach(u=>{
+if(u.side===attackerSide&&this.distance(u.x,u.y,target.x,target.y)<100){
+u.hp-=reflectDamage;
+this.createDamagePopup(u.x,u.y,Math.floor(reflectDamage),'#ec4899');
+}
+});
+}
+this.createDamagePopup(target.x,target.y-20,Math.floor(damage),color);
+this.createEffect(target.x,target.y,'hit',color);
+if(target.card?.id==='deceiver'&&target.hp<=0&&!target.cloned){
+target.cloned=true;
+for(let i=0;i<2;i++){
+const clone=this.spawnUnit(target.card,target.x+(Math.random()-0.5)*40,target.y+(Math.random()-0.5)*40,target.side);
+clone.hp=target.card.hp*0.3;
+clone.maxHp=clone.hp;
+clone.cloned=true;
+}
+}
+if(target.type==='tower'&&target.hp<=0){
+if(target.side==='player')this.enemyCrowns++;
+else this.playerCrowns++;
+this.createEffect(target.x,target.y,'explosion','#f59e0b');
+}
+}
+createProjectile(x,y,target,damage,side,color){
+this.projectiles.push({x,y,target,damage,side,color,active:true});
+}
+createEffect(x,y,type,color){
+for(let i=0;i<8;i++){
+this.effects.push({
+x,y,
+vx:(Math.random()-0.5)*100,
+vy:(Math.random()-0.5)*100-30,
+life:0.5+Math.random()*0.5,
+maxLife:1,
+size:3+Math.random()*4,
+color,
+type
+});
+}
+}
+createDamagePopup(x,y,damage,color){
+const popup=document.createElement('div');
+popup.className='damage-popup';
+popup.style.left=(x*this.game.scaleX)+'px';
+popup.style.top=(y*this.game.scaleY)+'px';
+popup.style.color=color;
+popup.textContent=(damage>0?'-':'+')+Math.abs(damage);
+document.getElementById('game-container').appendChild(popup);
+setTimeout(()=>popup.remove(),1000);
+}
+distance(x1,y1,x2,y2){
+return Math.sqrt((x2-x1)**2+(y2-y1)**2);
+}
+handleDeployClick(x,y){
+if(this.selectedCard===null)return;
+if(y>450)return;
+const card=this.playerHand[this.selectedCard];
+if(!card||this.playerElixir<card.cost)return;
+this.playerElixir-=card.cost;
+if(card.type==='spell'){
+this.castSpell(card,x,y,'player');
+}else{
+this.spawnUnit(card,x,y,'player');
+}
+this.playerHand.splice(this.selectedCard,1);
+if(this.playerDeckQueue.length>0)this.playerHand.push(this.playerDeckQueue.shift());
+this.selectedCard=null;
+this.renderDeckUI();
+}
+spawnUnit(card,x,y,side){
+const unit={
+x,y,hp:card.hp,maxHp:card.hp,card,side,
+attackCooldown:0,stunned:0,buffed:false,
+lifetime:card.lifetime||Infinity,spawnTimer:5,healTimer:1,
+stunCounter:0,cloned:false,dead:false
+};
+this.units.push(unit);
+this.createEffect(x,y,'spawn',card.color);
+return unit;
+}
+castSpell(card,x,y,side){
+this.createEffect(x,y,'spell',card.color);
+this.units.forEach(u=>{
+if(this.distance(u.x,u.y,x,y)<card.radius){
+if(card.id==='forgetfulness'&&u.side===side){
+u.hp=Math.min(u.maxHp,u.hp+250);
+this.createDamagePopup(u.x,u.y-20,-250,'#84cc16');
+}else if(card.id!=='forgetfulness'&&u.side!==side){
+let dmg=card.damage;
+if(card.id==='silencing'&&u.hp<=300)dmg=u.hp+1;
+if(card.id==='revelation'&&u.card?.type==='building')dmg*=2;
+if(card.id==='confusion'){
+const dx=u.x-x;
+const dy=u.y-y;
+const dist=Math.sqrt(dx*dx+dy*dy)||1;
+u.x+=(dx/dist)*60;
+u.y+=(dy/dist)*60;
+u.stunned=0.3;
+}
+if(card.id==='whirlwind_of_lies'){
+const dx=x-u.x;
+const dy=y-u.y;
+const dist=Math.sqrt(dx*dx+dy*dy)||1;
+u.x+=(dx/dist)*40;
+u.y+=(dy/dist)*40;
+}
+this.dealDamage(u,dmg,side,card.color);
+}
+}
+});
+const towers=side==='player'?this.enemyTowers:this.playerTowers;
+Object.values(towers).forEach(t=>{
+if(t.hp>0&&this.distance(t.x,t.y,x,y)<card.radius){
+let dmg=card.damage;
+if(card.id==='revelation')dmg*=2;
+if(card.id!=='forgetfulness'&&card.id!=='confusion'&&card.id!=='whirlwind_of_lies'){
+this.dealDamage(t,dmg,side,card.color);
+}
+}
+});
+}
+makeAIDecision(){
+if(this.enemyHand.length===0)return;
+const affordable=this.enemyHand.filter(c=>c.cost<=this.enemyElixir);
+if(affordable.length===0)return;
+const card=affordable[Math.floor(Math.random()*affordable.length)];
+this.enemyElixir-=card.cost;
+const x=100+Math.random()*300;
+const y=50+Math.random()*200;
+if(card.type==='spell'){
+let targetX=250,targetY=700;
+const playerUnits=this.units.filter(u=>u.side==='player');
+if(playerUnits.length>0){
+const target=playerUnits[0];
+targetX=target.x;
+targetY=target.y;
+}
+this.castSpell(card,targetX,targetY,'enemy');
+}else{
+this.spawnUnit(card,x,y,'enemy');
+}
+const idx=this.enemyHand.indexOf(card);
+this.enemyHand.splice(idx,1);
+if(this.enemyDeckQueue.length>0)this.enemyHand.push(this.enemyDeckQueue.shift());
+}
+checkWinCondition(){
+if(this.finished)return;
+const playerKingDead=this.playerTowers.king.hp<=0;
+const enemyKingDead=this.enemyTowers.king.hp<=0;
+if(playerKingDead||enemyKingDead){
+this.finished=true;
+const winner=enemyKingDead?'player':'enemy';
+setTimeout(()=>this.game.showResult(winner,this.playerCrowns,this.enemyCrowns),1500);
+return;
+}
+if(this.time<=0&&this.overtime){
+this.finished=true;
+let winner;
+if(this.playerCrowns>this.enemyCrowns)winner='player';
+else if(this.enemyCrowns>this.playerCrowns)winner='enemy';
+else winner='draw';
+setTimeout(()=>this.game.showResult(winner,this.playerCrowns,this.enemyCrowns),500);
+}
+}
+endBattle(){
+this.finished=true;
+let winner;
+if(this.playerCrowns>this.enemyCrowns)winner='player';
+else if(this.enemyCrowns>this.playerCrowns)winner='enemy';
+else winner='draw';
+this.game.showResult(winner,this.playerCrowns,this.enemyCrowns);
+}
+updateUI(){
+const elixirPct=(this.playerElixir/CONFIG.ELIXIR_MAX)*100;
+document.getElementById('elixir-fill').style.width=elixirPct+'%';
+document.getElementById('elixir-text').textContent=this.playerElixir.toFixed(1)+' / 10';
+const mins=Math.floor(Math.abs(this.time)/60);
+const secs=Math.floor(Math.abs(this.time)%60);
+const timerText=(this.overtime?'OT ':'')+`${mins}:${secs.toString().padStart(2,'0')}`;
+document.getElementById('timer').textContent=timerText;
+const pKing=Math.max(0,this.playerTowers.king.hp);
+const eKing=Math.max(0,this.enemyTowers.king.hp);
+document.getElementById('player-hp').textContent=`HP: ${Math.floor(pKing)}`;
+document.getElementById('enemy-hp').textContent=`HP: ${Math.floor(eKing)}`;
+for(let i=1;i<=3;i++){
+document.getElementById(`pc${i}`).classList.toggle('active',i<=this.playerCrowns);
+document.getElementById(`ec${i}`).classList.toggle('active',i<=this.enemyCrowns);
+}
+}
+renderDeckUI(){
+const container=document.getElementById('card-deck');
+container.innerHTML='';
+this.playerHand.forEach((card,index)=>{
+const div=document.createElement('div');
+div.className='card-slot'+(this.selectedCard===index?' selected':'')+(this.playerElixir<card.cost?' disabled':'');
+div.innerHTML=`<img class="card-portrait" src="${getPortraitDataURL(card)}" alt="${card.name}"><div class="card-cost">${card.cost}</div><div class="card-name">${card.name}</div>`;
+div.onclick=()=>{
+if(this.playerElixir>=card.cost){
+this.selectedCard=this.selectedCard===index?null:index;
+this.renderDeckUI();
+const info=document.getElementById('card-info');
+if(this.selectedCard!==null){
+info.innerHTML=`<div style="display:flex;align-items:center;gap:8px;"><img src="${getPortraitDataURL(card)}" style="width:36px;height:36px;border-radius:6px;object-fit:cover;border:1px solid ${card.color};box-shadow:0 0 8px ${card.color}99;flex-shrink:0;"><div style="text-align:left;"><strong style="color:${card.color};font-size:13px;">${card.name}</strong><br><span style="color:#aaa;">${card.desc}</span><br><span style="color:#888;font-size:10px;">Special: ${card.special}</span></div></div>`;
+info.classList.add('show');
+}else{
+info.classList.remove('show');
+}
+}
+};
+container.appendChild(div);
+});
+}
+render(ctx){
+const w=CONFIG.CANVAS_WIDTH;
+const h=CONFIG.CANVAS_HEIGHT;
+const t=performance.now()/1000;
+
+// ---- 3D-style battlefield (perspective ground plane) ----
+const skyGrad=ctx.createLinearGradient(0,0,0,460);
+skyGrad.addColorStop(0,'#1a0a2e');
+skyGrad.addColorStop(1,'#2d1b4e');
+ctx.fillStyle=skyGrad;
+ctx.fillRect(0,0,w,460);
+
+const groundGrad=ctx.createLinearGradient(0,440,0,h);
+groundGrad.addColorStop(0,'#1e3a2e');
+groundGrad.addColorStop(0.5,'#16291f');
+groundGrad.addColorStop(1,'#0d1a13');
+ctx.fillStyle=groundGrad;
+ctx.fillRect(0,440,w,h-440);
+
+// perspective grid lines converging toward horizon for 3D depth
+const horizonY=450,vanishX=w/2;
+ctx.strokeStyle='rgba(120,220,160,0.12)';
+ctx.lineWidth=1;
+for(let i=-6;i<=6;i++){
+const topX=vanishX+i*22;
+const botX=vanishX+i*110;
+ctx.beginPath();
+ctx.moveTo(topX,horizonY);
+ctx.lineTo(botX,h);
+ctx.stroke();
+}
+for(let row=0;row<8;row++){
+const rowY=horizonY+Math.pow(row/8,1.6)*(h-horizonY);
+ctx.strokeStyle=`rgba(120,220,160,${0.16-row*0.015})`;
+ctx.beginPath();
+ctx.moveTo(0,rowY);
+ctx.lineTo(w,rowY);
+ctx.stroke();
+}
+// faint upper-field perspective fade
+ctx.strokeStyle='rgba(160,140,255,0.10)';
+for(let row=0;row<6;row++){
+const rowY=horizonY-Math.pow(row/6,1.6)*horizonY*0.95;
+ctx.beginPath();
+ctx.moveTo(0,rowY);
+ctx.lineTo(w,rowY);
+ctx.stroke();
+}
+
+// river / mid divider with 3D glassy sheen
+const riverGrad=ctx.createLinearGradient(0,438,0,462);
+riverGrad.addColorStop(0,'rgba(59,130,246,0.05)');
+riverGrad.addColorStop(0.5,'rgba(96,165,250,0.45)');
+riverGrad.addColorStop(1,'rgba(59,130,246,0.05)');
+ctx.fillStyle=riverGrad;
+ctx.fillRect(0,438,w,24);
+for(let i=0;i<w;i+=30){
+const wave=Math.sin(t*2+i*0.1)*2;
+ctx.strokeStyle='rgba(220,240,255,0.25)';
+ctx.lineWidth=1.5;
+ctx.beginPath();
+ctx.moveTo(i,450+wave);
+ctx.lineTo(i+18,450+wave);
+ctx.stroke();
+}
+ctx.strokeStyle='rgba(147,197,253,0.5)';
+ctx.lineWidth=2;
+ctx.beginPath();
+ctx.moveTo(0,450);
+ctx.lineTo(w,450);
+ctx.stroke();
+
+ctx.fillStyle='rgba(34,197,94,0.06)';
+ctx.fillRect(0,460,w,440);
+ctx.fillStyle='rgba(239,68,68,0.06)';
+ctx.fillRect(0,0,w,440);
+
+// sort towers+units back-to-front by y for correct 3D overlap
+this.renderTower(ctx,this.enemyTowers.left,'#ef4444','#7f1d1d');
+this.renderTower(ctx,this.enemyTowers.right,'#ef4444','#7f1d1d');
+this.renderTower(ctx,this.enemyTowers.king,'#b91c1c','#450a0a');
+
+const drawables=[...this.units].sort((a,b)=>a.y-b.y);
+let towerDrawn=false;
+drawables.forEach(unit=>{
+if(!towerDrawn&&unit.y>500){this.renderTower(ctx,this.playerTowers.left,'#3b82f6','#1e3a8a');this.renderTower(ctx,this.playerTowers.right,'#3b82f6','#1e3a8a');this.renderTower(ctx,this.playerTowers.king,'#1d4ed8','#172554');towerDrawn=true;}
+this.renderUnit(ctx,unit,t);
+});
+if(!towerDrawn){this.renderTower(ctx,this.playerTowers.left,'#3b82f6','#1e3a8a');this.renderTower(ctx,this.playerTowers.right,'#3b82f6','#1e3a8a');this.renderTower(ctx,this.playerTowers.king,'#1d4ed8','#172554');}
+
+this.projectiles.forEach(p=>{
+if(!p.active)return;
+ctx.save();
+ctx.shadowBlur=14;
+ctx.shadowColor=p.color;
+const grad=ctx.createRadialGradient(p.x-2,p.y-2,0,p.x,p.y,6);
+grad.addColorStop(0,'#ffffff');
+grad.addColorStop(0.4,p.color);
+grad.addColorStop(1,p.color+'00');
+ctx.beginPath();
+ctx.arc(p.x,p.y,6,0,Math.PI*2);
+ctx.fillStyle=grad;
+ctx.fill();
+ctx.restore();
+});
+this.effects.forEach(e=>{
+const alpha=e.life/e.maxLife;
+ctx.beginPath();
+ctx.arc(e.x,e.y,e.size*alpha,0,Math.PI*2);
+const hexAlpha=Math.floor(alpha*255).toString(16).padStart(2,'0');
+ctx.fillStyle=e.color+hexAlpha;
+ctx.fill();
+});
+if(this.selectedCard!==null){
+const card=this.playerHand[this.selectedCard];
+if(card){
+ctx.strokeStyle='rgba(34,197,94,0.5)';
+ctx.lineWidth=2;
+ctx.setLineDash([5,5]);
+ctx.strokeRect(10,460,w-20,430);
+ctx.setLineDash([]);
+if(card.type==='spell'){
+ctx.fillStyle=card.color+'33';
+ctx.beginPath();
+ctx.arc(250,650,card.radius,0,Math.PI*2);
+ctx.fill();
+}
+}
+}
+}
+// Draws a 3D-shaded sphere (used as the base for character heads/bodies and tower domes)
+draw3DSphere(ctx,x,y,radius,baseColor,lightAngle){
+lightAngle=lightAngle===undefined?-0.7:lightAngle;
+const lx=x+Math.cos(lightAngle)*radius*0.4;
+const ly=y+Math.sin(lightAngle)*radius*0.4;
+const grad=ctx.createRadialGradient(lx,ly,radius*0.05,x,y,radius*1.15);
+grad.addColorStop(0,this.lighten(baseColor,55));
+grad.addColorStop(0.45,baseColor);
+grad.addColorStop(1,this.darken(baseColor,40));
+ctx.beginPath();
+ctx.arc(x,y,radius,0,Math.PI*2);
+ctx.fillStyle=grad;
+ctx.fill();
+// rim light
+ctx.beginPath();
+ctx.arc(x,y,radius,0,Math.PI*2);
+ctx.lineWidth=Math.max(1,radius*0.08);
+ctx.strokeStyle=this.lighten(baseColor,30)+'66';
+ctx.stroke();
+}
+lighten(hex,amt){
+return this.shade(hex,amt);
+}
+darken(hex,amt){
+return this.shade(hex,-amt);
+}
+shade(hex,amt){
+hex=hex.replace('#','');
+if(hex.length===3)hex=hex.split('').map(c=>c+c).join('');
+const num=parseInt(hex,16);
+let r=(num>>16)+amt,g=((num>>8)&0xff)+amt,b=(num&0xff)+amt;
+r=Math.max(0,Math.min(255,r));g=Math.max(0,Math.min(255,g));b=Math.max(0,Math.min(255,b));
+return '#'+(r<<16|g<<8|b).toString(16).padStart(6,'0');
+}
+renderTower(ctx,tower,color,darkColor){
+if(tower.hp<=0)return;
+const hpPct=tower.hp/tower.maxHp;
+const size=tower.type==='king'?38:30;
+ctx.save();
+// ground shadow (3D contact shadow)
+ctx.beginPath();
+ctx.ellipse(tower.x,tower.y+size*0.55,size*0.95,size*0.32,0,0,Math.PI*2);
+ctx.fillStyle='rgba(0,0,0,0.45)';
+ctx.fill();
+// base cylinder (3D depth body)
+const baseGrad=ctx.createLinearGradient(tower.x-size*0.7,0,tower.x+size*0.7,0);
+baseGrad.addColorStop(0,this.darken(darkColor,-10));
+baseGrad.addColorStop(0.5,darkColor);
+baseGrad.addColorStop(1,this.darken(darkColor,-20));
+ctx.beginPath();
+ctx.moveTo(tower.x-size*0.7,tower.y);
+ctx.lineTo(tower.x-size*0.55,tower.y+size*0.55);
+ctx.ellipse(tower.x,tower.y+size*0.55,size*0.55,size*0.18,0,Math.PI,0,true);
+ctx.lineTo(tower.x+size*0.7,tower.y);
+ctx.closePath();
+ctx.fillStyle=baseGrad;
+ctx.fill();
+ctx.beginPath();
+ctx.ellipse(tower.x,tower.y,size*0.7,size*0.22,0,0,Math.PI*2);
+ctx.fillStyle=this.lighten(darkColor,20);
+ctx.fill();
+// glowing dome (sphere) with crest icon
+this.draw3DSphere(ctx,tower.x,tower.y-size*0.35,size*0.62,color);
+ctx.shadowBlur=18;
+ctx.shadowColor=color;
+ctx.beginPath();
+ctx.arc(tower.x,tower.y-size*0.35,size*0.62,0,Math.PI*2);
+ctx.strokeStyle=color+'55';
+ctx.lineWidth=2;
+ctx.stroke();
+ctx.shadowBlur=0;
+ctx.fillStyle='#fff';
+ctx.font='bold 22px Arial';
+ctx.textAlign='center';
+ctx.textBaseline='middle';
+ctx.shadowBlur=6;
+ctx.shadowColor='rgba(0,0,0,0.6)';
+ctx.fillText(tower.type==='king'?'👑':'⚔️',tower.x,tower.y-size*0.35);
+ctx.shadowBlur=0;
+ctx.restore();
+const barWidth=50;
+const barHeight=6;
+ctx.fillStyle='#000a';
+ctx.fillRect(tower.x-barWidth/2,tower.y-size-16,barWidth,barHeight);
+const hpGrad=ctx.createLinearGradient(tower.x-barWidth/2,0,tower.x+barWidth/2,0);
+const hpColor=hpPct>0.5?'#22c55e':hpPct>0.25?'#f59e0b':'#ef4444';
+hpGrad.addColorStop(0,this.darken(hpColor,20));
+hpGrad.addColorStop(1,this.lighten(hpColor,20));
+ctx.fillStyle=hpGrad;
+ctx.fillRect(tower.x-barWidth/2,tower.y-size-16,barWidth*hpPct,barHeight);
+ctx.fillStyle='#fff';
+ctx.font='bold 9px Arial';
+ctx.textAlign='center';
+ctx.fillText(Math.floor(tower.hp),tower.x,tower.y-size-19);
+}
+renderUnit(ctx,unit,t){
+if(unit.hp<=0)return;
+const hpPct=unit.hp/unit.maxHp;
+const isBuilding=unit.card.type==='building';
+const size=isBuilding?20:15;
+const pulse=unit.buffed?Math.sin(performance.now()/200)*2:0;
+const bob=isBuilding?0:Math.sin((t||0)*6+unit.x*0.1)*1.5;
+const facingFlip=unit.side==='enemy'?-1:1;
+
+ctx.save();
+// ground contact shadow for 3D grounding
+ctx.beginPath();
+ctx.ellipse(unit.x,unit.y+size*0.85,size*0.85,size*0.28,0,0,Math.PI*2);
+ctx.fillStyle='rgba(0,0,0,0.4)';
+ctx.fill();
+
+if(isBuilding){
+// 3D block/structure body
+const topY=unit.y-size*0.6+bob;
+const bGrad=ctx.createLinearGradient(unit.x-size,0,unit.x+size,0);
+bGrad.addColorStop(0,this.lighten(unit.card.color,10));
+bGrad.addColorStop(1,this.darken(unit.card.color,25));
+ctx.beginPath();
+ctx.moveTo(unit.x-size*0.8,topY);
+ctx.lineTo(unit.x-size*0.65,unit.y+size*0.5+bob);
+ctx.lineTo(unit.x+size*0.65,unit.y+size*0.5+bob);
+ctx.lineTo(unit.x+size*0.8,topY);
+ctx.closePath();
+ctx.fillStyle=bGrad;
+ctx.fill();
+ctx.beginPath();
+ctx.ellipse(unit.x,topY,size*0.8,size*0.26,0,0,Math.PI*2);
+ctx.fillStyle=this.lighten(unit.card.color,30);
+ctx.fill();
+const bHeadR=size*0.52;
+const bPortrait=getPortraitCanvas(unit.card);
+const bx=unit.x,by=topY-size*0.45+pulse;
+ctx.save();
+ctx.beginPath();
+ctx.arc(bx,by,bHeadR,0,Math.PI*2);
+ctx.closePath();
+ctx.clip();
+ctx.drawImage(bPortrait,bx-bHeadR,by-bHeadR,bHeadR*2,bHeadR*2);
+const bSphereShadow=ctx.createRadialGradient(bx-bHeadR*0.35,by-bHeadR*0.4,bHeadR*0.1,bx,by,bHeadR*1.15);
+bSphereShadow.addColorStop(0,'rgba(0,0,0,0)');
+bSphereShadow.addColorStop(0.55,'rgba(0,0,0,0)');
+bSphereShadow.addColorStop(1,'rgba(0,0,0,0.55)');
+ctx.fillStyle=bSphereShadow;
+ctx.fillRect(bx-bHeadR,by-bHeadR,bHeadR*2,bHeadR*2);
+const bSpecGrad=ctx.createRadialGradient(bx-bHeadR*0.4,by-bHeadR*0.45,0,bx-bHeadR*0.4,by-bHeadR*0.45,bHeadR*0.6);
+bSpecGrad.addColorStop(0,'rgba(255,255,255,0.5)');
+bSpecGrad.addColorStop(0.5,'rgba(255,255,255,0.1)');
+bSpecGrad.addColorStop(1,'rgba(255,255,255,0)');
+ctx.fillStyle=bSpecGrad;
+ctx.fillRect(bx-bHeadR,by-bHeadR,bHeadR*2,bHeadR*2);
+ctx.restore();
+ctx.beginPath();
+ctx.arc(bx,by,bHeadR,0,Math.PI*2);
+ctx.lineWidth=Math.max(1,size*0.08);
+ctx.strokeStyle=pLighten(unit.card.color,20);
+ctx.shadowBlur=8;
+ctx.shadowColor=unit.card.color;
+ctx.stroke();
+ctx.shadowBlur=0;
+}else{
+// 3D character: portrait-wrapped sphere head over a shaded capsule body
+const headY=unit.y-size*0.55+bob;
+const bodyTopY=unit.y-size*0.15+bob;
+const bodyBotY=unit.y+size*0.55+bob;
+// torso (capsule, 3D shaded cylinder with highlight + shadow band)
+const torsoGrad=ctx.createLinearGradient(unit.x-size*0.55,0,unit.x+size*0.55,0);
+torsoGrad.addColorStop(0,this.darken(unit.card.color,30));
+torsoGrad.addColorStop(0.32,this.lighten(unit.card.color,35));
+torsoGrad.addColorStop(0.55,unit.card.color);
+torsoGrad.addColorStop(1,this.darken(unit.card.color,45));
+ctx.beginPath();
+ctx.moveTo(unit.x-size*0.55,bodyTopY);
+ctx.lineTo(unit.x-size*0.45,bodyBotY);
+ctx.arc(unit.x,bodyBotY,size*0.45,Math.PI,0,false);
+ctx.lineTo(unit.x+size*0.55,bodyTopY);
+ctx.arc(unit.x,bodyTopY,size*0.55,0,Math.PI,true);
+ctx.closePath();
+ctx.fillStyle=torsoGrad;
+ctx.fill();
+// ambient occlusion shadow under collar
+ctx.save();
+ctx.clip();
+const aoGrad=ctx.createRadialGradient(unit.x,bodyTopY,0,unit.x,bodyTopY,size*0.6);
+aoGrad.addColorStop(0,'rgba(0,0,0,0.35)');
+aoGrad.addColorStop(0.4,'rgba(0,0,0,0)');
+ctx.fillStyle=aoGrad;
+ctx.fillRect(unit.x-size,bodyTopY-size*0.2,size*2,size*0.5);
+ctx.restore();
+// small side shading arms for volume
+ctx.beginPath();
+ctx.ellipse(unit.x-size*facingFlip*0.55,bodyTopY+size*0.25,size*0.18,size*0.32,0.3*facingFlip,0,Math.PI*2);
+ctx.fillStyle=this.darken(unit.card.color,20);
+ctx.fill();
+ctx.beginPath();
+ctx.ellipse(unit.x-size*facingFlip*0.55-size*0.04,bodyTopY+size*0.18,size*0.08,size*0.14,0.3*facingFlip,0,Math.PI*2);
+ctx.fillStyle=this.lighten(unit.card.color,20);
+ctx.globalAlpha=0.5;
+ctx.fill();
+ctx.globalAlpha=1;
+
+// head: portrait artwork wrapped onto a genuine 3D sphere
+const headR=size*0.6;
+const portrait=getPortraitCanvas(unit.card);
+const hx=unit.x,hy=headY+pulse;
+ctx.save();
+ctx.beginPath();
+ctx.arc(hx,hy,headR,0,Math.PI*2);
+ctx.closePath();
+ctx.clip();
+ctx.drawImage(portrait,hx-headR,hy-headR,headR*2,headR*2);
+// spherical core shadow (darkens lower-right, simulating curvature falloff)
+const sphereShadow=ctx.createRadialGradient(hx-headR*0.35,hy-headR*0.4,headR*0.1,hx,hy,headR*1.15);
+sphereShadow.addColorStop(0,'rgba(0,0,0,0)');
+sphereShadow.addColorStop(0.55,'rgba(0,0,0,0)');
+sphereShadow.addColorStop(1,'rgba(0,0,0,0.55)');
+ctx.fillStyle=sphereShadow;
+ctx.fillRect(hx-headR,hy-headR,headR*2,headR*2);
+// specular highlight (top-left glossy light catch)
+const specGrad=ctx.createRadialGradient(hx-headR*0.4,hy-headR*0.45,0,hx-headR*0.4,hy-headR*0.45,headR*0.6);
+specGrad.addColorStop(0,'rgba(255,255,255,0.55)');
+specGrad.addColorStop(0.5,'rgba(255,255,255,0.12)');
+specGrad.addColorStop(1,'rgba(255,255,255,0)');
+ctx.fillStyle=specGrad;
+ctx.fillRect(hx-headR,hy-headR,headR*2,headR*2);
+ctx.restore();
+// rim light ring + glow
+ctx.beginPath();
+ctx.arc(hx,hy,headR,0,Math.PI*2);
+ctx.lineWidth=Math.max(1,size*0.1);
+ctx.strokeStyle=pLighten(unit.card.color,25);
+ctx.shadowBlur=10;
+ctx.shadowColor=unit.card.color;
+ctx.stroke();
+ctx.shadowBlur=0;
+// small bright crescent rim on the lit side for extra roundness
+ctx.beginPath();
+ctx.arc(hx,hy,headR*0.94,Math.PI*1.05,Math.PI*1.65);
+ctx.lineWidth=Math.max(1,size*0.06);
+ctx.strokeStyle='rgba(255,255,255,0.5)';
+ctx.stroke();
+}
+ctx.restore();
+
+if(unit.stunned>0){
+ctx.fillStyle='rgba(251,191,36,0.6)';
+ctx.font='bold 12px Arial';
+ctx.textAlign='center';
+ctx.fillText('💫',unit.x,unit.y-size-10);
+}
+const barWidth=30;
+const barHeight=4;
+ctx.fillStyle='#000a';
+ctx.fillRect(unit.x-barWidth/2,unit.y-size-8,barWidth,barHeight);
+const hpColor=hpPct>0.5?'#22c55e':hpPct>0.25?'#f59e0b':'#ef4444';
+const hpGrad=ctx.createLinearGradient(unit.x-barWidth/2,0,unit.x+barWidth/2,0);
+hpGrad.addColorStop(0,this.darken(hpColor,15));
+hpGrad.addColorStop(1,this.lighten(hpColor,15));
+ctx.fillStyle=hpGrad;
+ctx.fillRect(unit.x-barWidth/2,unit.y-size-8,barWidth*hpPct,barHeight);
+}
+}
+
+const game=new Game();
+</script>
+</body>
+</html>
